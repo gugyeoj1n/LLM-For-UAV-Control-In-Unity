@@ -112,7 +112,7 @@ public class DroneController : MonoBehaviour
                 isReturning = false;
                 
                 // 방향 및 속도 설정
-                targetPosition = command.Direction;
+                targetPosition = command.DirectionVector;
                 moveSpeed = command.Speed;
                 
                 // 고도 설정 (고도 변경 명령과 독립적으로 작동)
@@ -138,7 +138,7 @@ public class DroneController : MonoBehaviour
             case DroneCommand.DroneAction.Rotate:
                 // 회전 명령 처리 - 방향만 사용
                 isRotating = true;
-                targetRotation = Quaternion.Euler(command.Direction);
+                targetRotation = Quaternion.Euler(command.DirectionVector);
                 break;
                 
             case DroneCommand.DroneAction.Return:

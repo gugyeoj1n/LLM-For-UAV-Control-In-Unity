@@ -2,24 +2,39 @@ using UnityEngine;
 using System;
 using System.IO;
 
-[Serializable] 
-public class DroneCommand 
+[Serializable]
+public class DroneCommand
 {
     public enum DroneAction { Move, Hover, Altitude, Rotate, Return }
 
-    [NonSerialized] 
+    [NonSerialized]
     public DroneAction actionEnum;
 
     public string Action;
     public float Altitude;
-    public Vector3 Direction;
+    public float[] Direction; // Vector3 대신 배열로 받음
     public float Speed;
 
-    public static DroneCommand FromJson(string json) 
+    [NonSerialized]
+    public Vector3 DirectionVector; // 수동으로 파싱한 Vector3
+
+    public static DroneCommand FromJson(string json)
     {
         DroneCommand command = JsonUtility.FromJson<DroneCommand>(json);
 
-        switch (command.Action.ToLower()) 
+        // 수동으로 Vector3로 변환
+        if (command.Direction != null && command.Direction.Length == 3)
+        {
+            command.DirectionVector = new Vector3(command.Direction[0], command.Direction[1], command.Direction[2]);
+        }
+        else
+        {
+            Debug.LogWarning("Direction 값이 유효하지 않습니다. Vector3(0,0,0)으로 설정합니다.");
+            command.DirectionVector = Vector3.zero;
+        }
+
+        // 문자열 액션을 enum으로 변환
+        switch (command.Action.ToLower())
         {
             case "move":
                 command.actionEnum = DroneAction.Move;
@@ -46,6 +61,7 @@ public class DroneCommand
         return command;
     }
 }
+
 
 public class DroneCommandHandler : MonoBehaviour
 {

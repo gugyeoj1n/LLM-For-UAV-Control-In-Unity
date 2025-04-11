@@ -1,10 +1,10 @@
 {
-  "Action": "move",
+  "Action": "altitude",
   "Altitude": 10.0,
   "Direction": [
     0.0,
     0.0,
-    1.0
+    0.0
   ],
-  "Speed": 3.0
+  "Speed": 0.0
 }
