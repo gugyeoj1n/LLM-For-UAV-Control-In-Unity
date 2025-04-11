@@ -1,0 +1,10 @@
+{
+    "action": "move",
+    "altitude": 10,
+    "direction": [
+      0,
+      0,
+      0
+    ],
+    "speed": 100
+  }

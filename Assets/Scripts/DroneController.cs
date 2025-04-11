@@ -1,51 +1,157 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class DroneMovement : MonoBehaviour
+public class DroneController : MonoBehaviour
 {
     public float moveSpeed = 5f;
     public float verticalSpeed = 3f;
     public float rotationSpeed = 100f;
 
     private Rigidbody rb;
+    private Vector3 targetPosition;
+    private Quaternion targetRotation;
+    private bool isHovering = false;
+    private bool isMoving = false;
+    private bool isRotating = false;
+    private bool isReturning = false;
+    private Vector3 returnPosition = new Vector3(0, 1, 0);
+    private float targetAltitude;
+    private bool isChangingAltitude = false;
+    private float originalMoveSpeed;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.useGravity = false; // 드론은 자체 부력으로 떠있다고 가정
+        rb.useGravity = false;
+        originalMoveSpeed = moveSpeed;
     }
 
     void Update()
     {
-        // 수평 이동
-        float horizontal = Input.GetAxis("Horizontal"); // A, D
-        float vertical = Input.GetAxis("Vertical");     // W, S
-
-        Vector3 moveDirection = (transform.forward * vertical + transform.right * horizontal) * moveSpeed;
-
-        // 고도 조절
-        float altitude = 0f;
-        if (Input.GetKey(KeyCode.Space))
+        // 고도 변경 처리 (다른 명령과 독립적으로 작동)
+        if (isChangingAltitude)
         {
-            altitude = verticalSpeed; // 상승
+            float currentAltitude = transform.position.y;
+            float altitudeDifference = targetAltitude - currentAltitude;
+            
+            if (Mathf.Abs(altitudeDifference) > 0.1f)
+            {
+                // 현재 속도 유지하면서 고도만 변경
+                Vector3 currentVelocity = rb.linearVelocity;
+                currentVelocity.y = Mathf.Sign(altitudeDifference) * verticalSpeed;
+                rb.linearVelocity = currentVelocity;
+            }
+            else
+            {
+                // 목표 고도에 도달
+                Vector3 pos = transform.position;
+                pos.y = targetAltitude;
+                transform.position = pos;
+                
+                // 수직 속도만 0으로 설정
+                Vector3 currentVelocity = rb.linearVelocity;
+                currentVelocity.y = 0;
+                rb.linearVelocity = currentVelocity;
+                
+                isChangingAltitude = false;
+            }
         }
-        else if (Input.GetKey(KeyCode.LeftShift))
+        
+        // 회전 처리 (다른 명령과 독립적으로 작동)
+        if (isRotating)
         {
-            altitude = -verticalSpeed; // 하강
+            Quaternion currentRotation = transform.rotation;
+            transform.rotation = Quaternion.RotateTowards(currentRotation, targetRotation, rotationSpeed * Time.deltaTime);
+            
+            // 회전이 완료되었는지 확인
+            if (Quaternion.Angle(currentRotation, targetRotation) < 0.1f)
+            {
+                isRotating = false;
+            }
         }
-
-        moveDirection.y = altitude;
-
-        rb.linearVelocity = moveDirection;
-
-        // 방향 회전 (선택사항)
-        if (Input.GetKey(KeyCode.Q))
+        
+        // 이동 및 호버링 처리
+        if (isHovering)
         {
-            transform.Rotate(Vector3.up, -rotationSpeed * Time.deltaTime);
+            // 호버링 상태 유지 - moveSpeed를 0으로 설정하고 속도도 0으로 설정
+            moveSpeed = 0f;
+            rb.linearVelocity = Vector3.zero;
         }
-        else if (Input.GetKey(KeyCode.E))
+        else if (isMoving)
         {
-            transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
+            // 이동 명령 실행
+            Vector3 moveDirection = transform.TransformDirection(targetPosition);
+            rb.linearVelocity = moveDirection * moveSpeed;
+        }
+        else if (isReturning)
+        {
+            // 복귀 명령 실행
+            Vector3 returnDirection = (returnPosition - transform.position).normalized;
+            float distance = Vector3.Distance(transform.position, returnPosition);
+            
+            if (distance > 0.1f)
+            {
+                rb.linearVelocity = returnDirection * moveSpeed;
+            }
+            else
+            {
+                rb.linearVelocity = Vector3.zero;
+                isReturning = false;
+            }
+        }
+    }
+
+    public void OnCommand(DroneCommand command)
+    {
+        switch (command.actionEnum)
+        {
+            case DroneCommand.DroneAction.Move:
+                // 이동 명령 처리 - 방향, 속도, 고도만 사용
+                isHovering = false;
+                isMoving = true;
+                isReturning = false;
+                
+                // 방향 및 속도 설정
+                targetPosition = command.Direction;
+                moveSpeed = command.Speed;
+                
+                // 고도 설정 (고도 변경 명령과 독립적으로 작동)
+                targetAltitude = command.Altitude;
+                isChangingAltitude = true;
+                break;
+                
+            case DroneCommand.DroneAction.Hover:
+                // 호버링 명령 처리 - 다른 모든 이동 명령 중지
+                isHovering = true;
+                isMoving = false;
+                isReturning = false;
+                moveSpeed = 0f;
+                rb.linearVelocity = Vector3.zero; // 즉시 속도 0으로 설정
+                break;
+                
+            case DroneCommand.DroneAction.Altitude:
+                // 고도 변경 명령 처리 - 고도만 사용
+                targetAltitude = command.Altitude;
+                isChangingAltitude = true;
+                break;
+                
+            case DroneCommand.DroneAction.Rotate:
+                // 회전 명령 처리 - 방향만 사용
+                isRotating = true;
+                targetRotation = Quaternion.Euler(command.Direction);
+                break;
+                
+            case DroneCommand.DroneAction.Return:
+                // 복귀 명령 처리 - 다른 모든 이동 명령 중지
+                isHovering = false;
+                isMoving = false;
+                isReturning = true;
+                moveSpeed = originalMoveSpeed; // 원래 속도로 복원
+                break;
+                
+            default:
+                Debug.LogWarning($"알 수 없는 명령: {command.actionEnum}");
+                break;
         }
     }
 }
