@@ -26,7 +26,7 @@ namespace DroneCommandParser
         {
             Console.WriteLine("UAV 명령 테스트 애플리케이션");
             Console.WriteLine("=============================================");
-            Console.WriteLine("종료하려면 'exit' 또는 'quit'를 입력하세요.");
+            Console.WriteLine("명령 파일을 읽어서 처리합니다.");
 
             // 초기 상태 출력
             Console.WriteLine("\n=== 초기 드론 상태 ===");
@@ -70,24 +70,38 @@ Direction Vector Examples:
 Analyze the input command and return only the JSON object. Do not include any explanations or other text.
 ";
 
-            // 명령 처리 루프
-            while (true)
+            // 명령 파일 경로 설정
+            string commandFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "commands.txt");
+            Console.WriteLine($"명령 파일 경로: {commandFilePath}");
+            if (!File.Exists(commandFilePath))
             {
-                Console.WriteLine("\n");
-                Console.Write("드론 명령을 입력하세요: ");
-                string userInput = Console.ReadLine() ?? "";
+                Console.WriteLine($"\n오류: {commandFilePath} 파일이 존재하지 않습니다.");
+                // 프로젝트 디렉토리에서도 시도
+                string projectPath = Path.Combine(Directory.GetCurrentDirectory(), "commands.txt");
+                Console.WriteLine($"프로젝트 디렉토리에서 시도: {projectPath}");
+                if (File.Exists(projectPath))
+                {
+                    commandFilePath = projectPath;
+                    Console.WriteLine("프로젝트 디렉토리에서 파일을 찾았습니다.");
+                }
+                else
+                {
+                    return;
+                }
+            }
 
+            // 명령 파일 읽기
+            string[] commands = File.ReadAllLines(commandFilePath);
+            Console.WriteLine($"\n{commands.Length}개의 명령을 처리합니다.");
+
+            foreach (string userInput in commands)
+            {
                 if (string.IsNullOrWhiteSpace(userInput))
                 {
-                    Console.WriteLine("명령을 입력해주세요.");
                     continue;
                 }
 
-                if (userInput.ToLower() == "exit" || userInput.ToLower() == "quit")
-                {
-                    Console.WriteLine("프로그램을 종료합니다.");
-                    break;
-                }
+                Console.WriteLine($"\n처리 중인 명령: {userInput}");
 
                 try
                 {
@@ -138,6 +152,8 @@ Analyze the input command and return only the JSON object. Do not include any ex
                     }
                 }
             }
+
+            Console.WriteLine("\n모든 명령 처리가 완료되었습니다.");
         }
 
         // 드론 상태를 업데이트하는 메서드
