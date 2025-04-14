@@ -1,6 +1,6 @@
 {
-  "Action": "move",
-  "Altitude": 10.0,
+  "Action": "altitude",
+  "Altitude": 30.0,
   "Direction": [
     0.0,
     0.0,
