@@ -1,6 +1,8 @@
 using UnityEngine;
 using System;
 using System.IO;
+using System.Collections;
+using System.Collections.Generic;
 
 [Serializable]
 public class DroneCommand
@@ -67,6 +69,8 @@ public class DroneCommandHandler : MonoBehaviour
 {
     public DroneCommand currentCommand;
     private DroneController droneController;
+    private Queue<DroneCommand> commandQueue = new Queue<DroneCommand>();
+    private bool isProcessingCommand = false;
 
     public static DroneCommandHandler instance;
     
@@ -82,8 +86,26 @@ public class DroneCommandHandler : MonoBehaviour
         {
             Debug.LogError("DroneController 컴포넌트를 찾을 수 없습니다.");
         }
+        CheckForExistingCommand(); // 기존 json 자동로드
     }
 
+    private void CheckForExistingCommand() // 기존 json 자동로드
+    {
+        try
+        {
+            TextAsset jsonFile = Resources.Load<TextAsset>("command");
+            if (jsonFile != null)
+            {
+                Debug.Log("기존 command.json 파일을 발견했습니다. 자동으로 로드합니다.");
+                ConvertCommandFromJson();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"기존 명령 확인 중 오류: {e.Message}");
+        }
+    }
+    
     public void ConvertCommandFromJson()
     {
         try
@@ -91,19 +113,22 @@ public class DroneCommandHandler : MonoBehaviour
             TextAsset jsonFile = Resources.Load<TextAsset>("command");
             if (jsonFile != null)
             {
+                Debug.Log($"명령 파일 내용: {jsonFile.text}");
                 DroneCommand command = DroneCommand.FromJson(jsonFile.text);
-                currentCommand = command;
                 
-                // 명령을 DroneController에 전달
-                if (droneController != null)
+                // 큐에 명령 추가
+                commandQueue.Enqueue(command);
+                Debug.Log($"명령이 큐에 추가됨: {command.actionEnum}. 현재 큐 크기: {commandQueue.Count}");
+                
+                // 처리 중이 아니면 처리 시작
+                if (!isProcessingCommand)
                 {
-                    droneController.OnCommand(currentCommand);
-                    Debug.Log($"명령 실행: {currentCommand.actionEnum}");
+                    ProcessNextCommand();
                 }
             }
             else
             {
-                Debug.LogError("test.json 파일을 찾을 수 없습니다. Resources 폴더에 파일이 있는지 확인하세요.");
+                Debug.LogError("command.json 파일을 찾을 수 없습니다.");
             }
         }
         catch (Exception e)
@@ -111,82 +136,55 @@ public class DroneCommandHandler : MonoBehaviour
             Debug.LogError($"JSON 파일 처리 중 오류 발생: {e.Message}");
         }
     }
-}
 
-/*
-public class DroneCommandHandler : MonoBehaviour
-{
-    private DroneMovement droneMovement;
-    private Vector3 startPosition;
-    private Quaternion startRotation;
-
-    void Start()
+    private void ProcessNextCommand()
     {
-        droneMovement = GetComponent<DroneMovement>();
-        startPosition = transform.position;
-        startRotation = transform.rotation;
-    }
-
-    public void ProcessCommand(DroneCommand command)
-    {
-        switch (command.action.ToLower())
+        if (commandQueue.Count > 0)
         {
-            case "move":
-                HandleMoveCommand(command);
-                break;
-            case "hover":
-                HandleHoverCommand();
-                break;
-            case "altitude":
-                HandleAltitudeCommand(command);
-                break;
-            case "rotate":
-                HandleRotateCommand(command);
-                break;
-            case "return":
-                HandleReturnCommand();
-                break;
-            default:
-                Debug.LogWarning($"Unknown command action: {command.action}");
-                break;
+            isProcessingCommand = true;
+            DroneCommand cmd = commandQueue.Dequeue();
+            currentCommand = cmd;
+            
+            Debug.Log($"명령 처리 시작: {cmd.actionEnum}");
+            
+            if (droneController != null)
+            {
+                droneController.OnCommand(currentCommand);
+                Debug.Log($"명령이 드론에 전달됨: {currentCommand.actionEnum}");
+                
+                // 명령 처리 완료 후 일정 시간 대기
+                StartCoroutine(WaitAndProcessNext(2.0f));
+            }
+            else
+            {
+                Debug.LogError("DroneController가 null입니다.");
+                isProcessingCommand = false;
+            }
+        }
+        else
+        {
+            isProcessingCommand = false;
+            Debug.Log("처리할 명령이 없습니다.");
         }
     }
 
-    private void HandleMoveCommand(DroneCommand command)
+    private IEnumerator WaitAndProcessNext(float delay)
     {
-        // 드론의 현재 방향을 기준으로 이동 방향 계산
-        Vector3 moveDirection = transform.TransformDirection(command.direction);
-        droneMovement.SetMovement(moveDirection, command.speed);
+        yield return new WaitForSeconds(delay);
+        isProcessingCommand = false;
+        ProcessNextCommand();
     }
-
-    private void HandleHoverCommand()
+    // DroneCommandHandler.cs에 다음 메서드 추가
+    public void AddCommand(DroneCommand command)
     {
-        // 현재 위치 유지
-        droneMovement.SetMovement(Vector3.zero, 0f);
+        // 큐에 명령 추가
+        commandQueue.Enqueue(command);
+        Debug.Log($"명령이 직접 추가됨: {command.actionEnum}. 현재 큐 크기: {commandQueue.Count}");
+        
+        // 처리 중이 아니면 처리 시작
+        if (!isProcessingCommand)
+        {
+            ProcessNextCommand();
+        }
     }
-
-    private void HandleAltitudeCommand(DroneCommand command)
-    {
-        // 고도 변경
-        float altitudeChange = command.altitude - transform.position.y;
-        Vector3 verticalMovement = new Vector3(0, Mathf.Sign(altitudeChange), 0);
-        droneMovement.SetMovement(verticalMovement, Mathf.Abs(altitudeChange));
-    }
-
-    private void HandleRotateCommand(DroneCommand command)
-    {
-        // 회전 처리
-        float rotationAmount = command.direction.y * command.speed * Time.deltaTime;
-        transform.Rotate(Vector3.up, rotationAmount);
-    }
-
-    private void HandleReturnCommand()
-    {
-        // 시작 위치로 복귀
-        Vector3 returnDirection = (startPosition - transform.position).normalized;
-        float distance = Vector3.Distance(transform.position, startPosition);
-        droneMovement.SetMovement(returnDirection, distance);
-    }
-} 
-
-*/
+}

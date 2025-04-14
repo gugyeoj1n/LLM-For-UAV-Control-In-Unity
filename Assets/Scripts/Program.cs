@@ -28,6 +28,11 @@ public class Program : MonoBehaviour
 
     public void LLMProcess(string promptInput)
     {
+        // 새 명령을 처리하기 전에 상태 확인
+        Debug.Log("새 명령 처리 전 - 현재 드론 상태:");
+        PrintDroneState();
+        
+        // 이하 기존 코드...
         StartCoroutine(ProcessCommands(promptInput));
     }
     
@@ -120,6 +125,7 @@ Analyze the input command and return only the JSON object. Do not include any ex
     }
     
     // JSON 결과를 파일로 저장하는 메서드
+    // Program.cs의 SaveJsonToFile 메서드 부분을 수정
     private void SaveJsonToFile()
     {
         try
@@ -134,13 +140,76 @@ Analyze the input command and return only the JSON object. Do not include any ex
             File.WriteAllText(filePath, jsonResult);
             
             Debug.Log($"JSON 결과가 성공적으로 저장되었습니다: {filePath}");
+
+            // 중요! 현재 명령 데이터를 바로 DroneCommand 객체로 변환하여 전달
+            DroneCommand command = new DroneCommand();
+            command.Action = currentDroneState.Action;
+            command.Altitude = currentDroneState.Altitude;
+            command.Direction = currentDroneState.Direction;
+            command.Speed = currentDroneState.Speed;
+            
+            // FromJson 메서드에 있는 코드와 동일하게 처리
+            if (command.Direction != null && command.Direction.Length == 3)
+            {
+                command.DirectionVector = new Vector3(command.Direction[0], command.Direction[1], command.Direction[2]);
+            }
+            
+            // 문자열 액션을 enum으로 변환
+            switch (command.Action.ToLower())
+            {
+                case "move":
+                    command.actionEnum = DroneCommand.DroneAction.Move;
+                    break;
+                case "hover":
+                    command.actionEnum = DroneCommand.DroneAction.Hover;
+                    command.Speed = 0;
+                    break;
+                case "altitude":
+                    command.actionEnum = DroneCommand.DroneAction.Altitude;
+                    break;
+                case "rotate":
+                    command.actionEnum = DroneCommand.DroneAction.Rotate;
+                    break;
+                case "return":
+                    command.actionEnum = DroneCommand.DroneAction.Return;
+                    break;
+                default:
+                    Debug.LogWarning($"알 수 없는 액션: {command.Action}. 기본값 Move로 설정합니다.");
+                    command.actionEnum = DroneCommand.DroneAction.Move;
+                    break;
+            }
+            
+            // 명령을 직접 전달
+            if (DroneCommandHandler.instance != null)
+            {
+                DroneCommandHandler.instance.AddCommand(command);
+                Debug.Log("현재 명령이 직접 전달되었습니다!");
+            }
+            else
+            {
+                Debug.LogError("DroneCommandHandler.instance가 null입니다!");
+            }
         }
         catch (Exception ex)
         {
             Debug.LogError($"JSON 파일 저장 중 오류 발생: {ex.Message}");
         }
-
-        DroneCommandHandler.instance.ConvertCommandFromJson();
+    }
+    private System.Collections.IEnumerator DelayedExecuteCommand()
+    {
+        // 짧은 지연을 주어 파일 I/O 작업이 완료될 시간 확보
+        
+        yield return new WaitForSeconds(1.0f);
+        
+        if (DroneCommandHandler.instance != null)
+        {
+            Debug.Log("지연 후 명령 실행");
+            DroneCommandHandler.instance.ConvertCommandFromJson();
+        }
+        else
+        {
+            Debug.LogError("DroneCommandHandler.instance가 null입니다.");
+        }
     }
 
     // 드론 상태를 업데이트하는 메서드
