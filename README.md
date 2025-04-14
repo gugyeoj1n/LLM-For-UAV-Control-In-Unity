@@ -56,4 +56,7 @@ Large Language Model(LLM)을 활용하여 자연어 명령을 드론 제어로 �
     4. DroneController는 전달받은 명령을 수행합니다.
 
 ### 실제 Unity 사용 및 Ollama 통신 화면
-![UAV_Result-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/0d3e5833-1e68-4548-b393-72141424f74a)
+![UAV_Result-ezgif com-video-to-gif-converter (1)](https://github.com/user-attachments/assets/60e077d6-d4b1-4a92-b48e-987fbc2525f5)
+
+
+
