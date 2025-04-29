@@ -7,7 +7,7 @@ using System.Collections.Generic;
 [Serializable]
 public class DroneCommand
 {
-    public enum DroneAction { Move, Hover, Altitude, Rotate, Return }
+    public enum DroneAction { Move, Hover, Altitude, Rotate, Return, Reconnaissance }
 
     [NonSerialized]
     public DroneAction actionEnum;
@@ -53,6 +53,9 @@ public class DroneCommand
                 break;
             case "return":
                 command.actionEnum = DroneAction.Return;
+                break;
+            case "reconnaissance":
+                command.actionEnum = DroneAction.Reconnaissance;
                 break;
             default:
                 Debug.LogWarning($"알 수 없는 액션: {command.Action}. 기본값 Move로 설정합니다.");

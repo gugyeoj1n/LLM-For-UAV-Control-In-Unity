@@ -12,6 +12,7 @@ public class LidarScanner : MonoBehaviour
     void Update()
     {
         ScanSurroundings();
+        DrawSafeCircle();
     }
 
     void ScanSurroundings()
@@ -32,6 +33,25 @@ public class LidarScanner : MonoBehaviour
             }
 
             Debug.DrawRay(transform.position, dir * scanResults[dir], Color.green);
+        }
+    }
+
+    void DrawSafeCircle()
+    {
+        Vector3 center = transform.position;
+        Vector3 prevPoint = Vector3.zero;
+
+        for (int i = 0; i <= raysPer360; i++)
+        {
+            float angle = (360f / raysPer360) * i * Mathf.Deg2Rad;
+            Vector3 point = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * safeDistance;
+
+            if (i > 0)
+            {
+                Debug.DrawLine(prevPoint, point, Color.blue); // 안전 거리 원: 빨간 선
+            }
+
+            prevPoint = point;
         }
     }
 }
