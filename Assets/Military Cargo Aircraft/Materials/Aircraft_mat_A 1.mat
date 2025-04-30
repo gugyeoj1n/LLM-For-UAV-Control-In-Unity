@@ -166,8 +166,8 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.5377358, g: 0.5377358, b: 0.5377358, a: 1}
-    - _Color: {r: 0.53773576, g: 0.53773576, b: 0.53773576, a: 1}
+    - _BaseColor: {r: 0.8301887, g: 0.41901034, b: 0.48687476, a: 1}
+    - _Color: {r: 0.8301887, g: 0.4190103, b: 0.4868747, a: 1}
     - _CustomTex_Offset: {r: 0, g: 0, b: 0, a: 0}
     - _CustomTex_Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
