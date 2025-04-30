@@ -25,6 +25,8 @@ public class DroneController : MonoBehaviour
 
     private LidarScanner lidar;
 
+    private RunYOLO yolo;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -32,6 +34,8 @@ public class DroneController : MonoBehaviour
         originalMoveSpeed = moveSpeed;
 
         lidar = GetComponent<LidarScanner>();
+        yolo = FindFirstObjectByType<RunYOLO>( );
+        yolo.enabled = false;
     }
 
     void Update()
@@ -186,6 +190,7 @@ public class DroneController : MonoBehaviour
         {
             case DroneCommand.DroneAction.Move:
                 isMoving = true;
+                yolo.enabled = false;
                 targetPosition = command.DirectionVector;
                 moveSpeed = command.Speed > 0 ? command.Speed : 5f;
 
@@ -195,27 +200,32 @@ public class DroneController : MonoBehaviour
 
             case DroneCommand.DroneAction.Hover:
                 isHovering = true;
+                yolo.enabled = false;
                 moveSpeed = 0f;
                 rb.linearVelocity = Vector3.zero;
                 break;
 
             case DroneCommand.DroneAction.Altitude:
                 targetAltitude = command.Altitude;
+                yolo.enabled = false;
                 isChangingAltitude = true;
                 break;
 
             case DroneCommand.DroneAction.Rotate:
                 isRotating = true;
+                yolo.enabled = false;
                 targetRotation = Quaternion.Euler(command.DirectionVector);
                 break;
 
             case DroneCommand.DroneAction.Return:
                 isReturning = true;
+                yolo.enabled = false;
                 moveSpeed = originalMoveSpeed;
                 break;
 
             case DroneCommand.DroneAction.Reconnaissance:
                 isReconnaissance = true;
+                yolo.enabled = true;
                 moveSpeed = command.Speed > 0 ? command.Speed : 2f;
                 break;
 
