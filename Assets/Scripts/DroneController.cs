@@ -33,6 +33,8 @@ public class DroneController : MonoBehaviour
     public float trackingDistance = 5f; // 추적 대상과 유지할 거리
     public float trackingSpeedMultiplier = 0.8f; // 추적 시 속도 계수
 
+    private AutomaticDroneTrackingLogger trackingLogger;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -42,6 +44,12 @@ public class DroneController : MonoBehaviour
         lidar = GetComponent<LidarScanner>();
         yolo = FindFirstObjectByType<RunYOLO>();
         yolo.enabled = false;
+
+        trackingLogger = FindObjectOfType<AutomaticDroneTrackingLogger>();
+        if (trackingLogger == null)
+        {
+            Debug.LogWarning("AutomaticDroneTrackingLogger를 찾을 수 없습니다. 자동 요약 기능이 비활성화됩니다.");
+        }
     }
 
     void Update()
@@ -250,7 +258,12 @@ public class DroneController : MonoBehaviour
             ResetAllStates();
             isTracking = true;
             moveSpeed = originalMoveSpeed * trackingSpeedMultiplier;
-            Debug.Log("추적 시작: " + trackingTarget.name);
+            // Debug.Log("추적 시작: " + trackingTarget.name);
+
+            if (trackingLogger != null)
+            {
+            trackingLogger.SetTrackingActive(true);
+            }
         }
         else
         {
@@ -263,6 +276,11 @@ public class DroneController : MonoBehaviour
     {
         isTracking = false;
         Debug.Log("추적 중지");
+
+        if (trackingLogger != null)
+        {
+            trackingLogger.SetTrackingActive(false);
+        }
     }
 
     public void OnCommand(DroneCommand command)
