@@ -21,6 +21,7 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
     // 자동 요약 타이머
     public float autoSummarizeInterval = 10.0f; // 10초 간격으로 자동 요약
     private float lastSummarizeTime = 0f;
+    private bool isProcessingSummary = false; // API 요청 처리 중 여부
     
     // 로그 수집 시간
     private float lastLogTime = 0f;
@@ -30,9 +31,9 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
     // 트래킹 활성화 여부
     public bool isTrackingActive = false;
     
-    // 최근 로그 저장용
-    private List<string> recentLogs = new List<string>();
-    private int maxRecentLogs = 10; // 최대 저장할 최근 로그 수
+    // 최근 로그 저장용 (큐 형식)
+    private Queue<string> recentLogs = new Queue<string>();
+    private int maxRecentLogs = 15; // 최대 저장할 최근 로그 수
     
     // LLM API 설정
     private string apiUrl = "http://localhost:11434/api/chat";
@@ -194,17 +195,17 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
             string timestampedLog = $"[{DateTime.Now.ToString("HH:mm:ss")}] {logMessage}";
             File.AppendAllText(logFilePath, timestampedLog + "\n");
             
-            // 최근 로그 목록 업데이트
-            recentLogs.Add(timestampedLog);
+            // 큐에 로그 추가
+            recentLogs.Enqueue(timestampedLog);
             if (recentLogs.Count > maxRecentLogs)
             {
-                recentLogs.RemoveAt(0);
+                recentLogs.Dequeue(); // 가장 오래된 로그 제거
             }
             
             // UI에 최신 로그 표시 (선택적)
             if (uiManager != null)
             {
-                string displayText = string.Join("\n", recentLogs.TakeLast(5));
+                string displayText = string.Join("\n", recentLogs.ToArray());
                 uiManager.SetDroneResultText(displayText);
             }
             
@@ -221,6 +222,13 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
     /// </summary>
     public void RequestLogSummary()
     {
+        // 이미 요약 처리 중이면 스킵
+        if (isProcessingSummary)
+        {
+            Debug.Log("이전 요약 처리가 아직 진행 중입니다.");
+            return;
+        }
+
         try
         {
             // 로그 파일 읽기
@@ -238,10 +246,12 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
             }
             
             // API 요청 시작
+            isProcessingSummary = true;
             StartCoroutine(ProcessSummaryRequest(logContent));
         }
         catch (Exception e)
         {
+            isProcessingSummary = false;
             Debug.LogError($"로그 요약 요청 오류: {e.Message}");
         }
     }
@@ -256,12 +266,14 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
         
         // 요약용 시스템 프롬프트
         string systemPrompt = @"
-You are an AI assistant summarizing drone tracking information.
-Please analyze the following log content to concisely summarize the movements and patterns of the target being tracked by the drone in 3-4 sentences.
-The summary should contain the following information:
-1. Key movement patterns (left and right, up and down, approach, reverse, etc.)
-2. the frequency or regularity of movement
-3. Unusual (sudden change, consistent pattern, etc.)
+다음 드론 추적 시스템 로그를 분석하여 표적의 움직임 패턴을 3-4문장으로 간결하게 요약해주세요:
+
+1. 주요 움직임 패턴(좌우 이동, 상하 이동, 접근, 후퇴 등)을 식별하세요
+2. 움직임의 빈도나 규칙성을 분석하세요
+3. 비정상적인 움직임(급격한 방향 전환, 일관된 패턴, 예측 불가능한 움직임 등)을 강조하세요
+4. 표적의 전반적인 이동 경로와 의도를 추론해보세요
+
+요약은 간결하면서도 정보가 풍부해야 하며, 드론 운영자가 표적의 행동 패턴을 신속하게 이해할 수 있도록 작성해주세요.
 ";
         
         // Ollama API 요청 형식 구성
@@ -303,6 +315,7 @@ The summary should contain the following information:
             {
                 Debug.LogError($"요약 API 요청 실패: {request.error}");
                 LogTrackingInfo($"요약 실패: {request.error}");
+                isProcessingSummary = false;
                 yield break;
             }
             
@@ -331,6 +344,10 @@ The summary should contain the following information:
             {
                 Debug.LogError($"요약 응답 처리 오류: {e.Message}");
                 LogTrackingInfo($"요약 처리 실패: {e.Message}");
+            }
+            finally
+            {
+                isProcessingSummary = false;
             }
         }
     }
