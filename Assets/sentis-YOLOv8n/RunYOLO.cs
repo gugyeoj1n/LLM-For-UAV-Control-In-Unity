@@ -327,50 +327,54 @@ public class RunYOLO : MonoBehaviour
             if (!string.IsNullOrEmpty(box.label) && box.label.Trim().Equals("drone", StringComparison.OrdinalIgnoreCase))
             {
                 droneDetected = true;
-                
+
                 // 드론 위치와 크기 계산
-                Vector2 dronePos = new Vector2(box.centerX + displayWidth/2, box.centerY + displayHeight/2); // 화면 좌표로 변환
+                Vector2 dronePos = new Vector2(box.centerX + displayWidth / 2, box.centerY + displayHeight / 2); // 화면 좌표로 변환
                 Vector2 droneSize = new Vector2(box.width, box.height);
-                
+
                 // 드론 ID 생성 (현재는 단순히 인덱스 사용)
                 string droneId = "drone_" + n;
                 detectedDroneIds.Add(droneId);
-                
-                // 기존에 추적 중인 드론인지 확인하고 위치 업데이트 또는 새로 추가
-                if (droneTrackers.ContainsKey(droneId))
-                {
-                    droneTrackers[droneId].UpdatePosition(dronePos, droneSize);
-                }
-                else
+
+                bool isNewDrone = !droneTrackers.ContainsKey(droneId);
+
+                // 위치 업데이트 또는 새로 추가
+                if (isNewDrone)
                 {
                     droneTrackers[droneId] = new DroneTracker(dronePos, droneSize, box.label);
                 }
-                
+                else
+                {
+                    droneTrackers[droneId].UpdatePosition(dronePos, droneSize);
+                }
+
                 // 가장 최근 감지된 드론으로 업데이트
                 latestDetectedDrone = droneTrackers[droneId];
                 lastDroneDetectionTime = Time.time;
-                
-                // 움직임 패턴 분석 결과를 UI에 표시
-                UpdateDroneStatusUI(droneId);
-                
-                // 기본 드론 감지 처리
-                Debug.Log("드론 감지! 움직임: " + latestDetectedDrone.movementPattern);
-                DroneController controller = FindFirstObjectByType<DroneController>();
-                if (controller != null)
+
+                if (isNewDrone)
                 {
-                    DroneCommand hoverCommand = new DroneCommand
+                    // 새 드론일 때만 수행할 작업들
+                    UpdateDroneStatusUI(droneId);
+                    Debug.Log("드론 감지! 움직임: " + latestDetectedDrone.movementPattern);
+
+                    DroneController controller = FindFirstObjectByType<DroneController>();
+                    if (controller != null)
                     {
-                        actionEnum = DroneCommand.DroneAction.Hover
-                    };
-                    controller.OnCommand(hoverCommand);
-                    
-                    // 드론 추적 대상 설정 (첫 번째 코드에서 가져온 기능)
-                    controller.trackingTarget = FindClosestDroneToBox(box);
-                    controller.StartTracking();
-                    
-                    UIManager.instance.SetDroneResultText("드론이 감지되었습니다.");
+                        DroneCommand hoverCommand = new DroneCommand
+                        {
+                            actionEnum = DroneCommand.DroneAction.Hover
+                        };
+                        controller.OnCommand(hoverCommand);
+
+                        controller.trackingTarget = FindClosestDroneToBox(box);
+                        controller.StartTracking();
+
+                        UIManager.instance.SetDroneResultText("드론이 감지되었습니다.");
+                    }
                 }
             }
+
             
             DrawBox(box, n, displayHeight * 0.05f);
             currentFrameBoxCount++;

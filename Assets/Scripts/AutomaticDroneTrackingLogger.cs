@@ -6,6 +6,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
+using System.Linq;
 
 public class AutomaticDroneTrackingLogger : MonoBehaviour
 {
@@ -23,14 +24,15 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
     
     // 로그 수집 시간
     private float lastLogTime = 0f;
-    private float logInterval = 0.5f; // 0.5초 간격으로 로그 수집
+    [SerializeField]
+    private float logInterval; // 0.5초 간격으로 로그 수집
     
     // 트래킹 활성화 여부
-    private bool isTrackingActive = false;
+    public bool isTrackingActive = false;
     
     // 최근 로그 저장용
     private List<string> recentLogs = new List<string>();
-    private int maxRecentLogs = 20; // 최대 저장할 최근 로그 수
+    private int maxRecentLogs = 10; // 최대 저장할 최근 로그 수
     
     // LLM API 설정
     private string apiUrl = "http://localhost:11434/api/chat";
@@ -75,7 +77,7 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
             lastLogTime = Time.time;
             CollectTrackingData();
         }
-        
+
         // 자동 요약 간격 관리
         if (Time.time - lastSummarizeTime >= autoSummarizeInterval)
         {
@@ -202,7 +204,7 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
             // UI에 최신 로그 표시 (선택적)
             if (uiManager != null)
             {
-                string displayText = string.Join("\n", recentLogs);
+                string displayText = string.Join("\n", recentLogs.TakeLast(5));
                 uiManager.SetDroneResultText(displayText);
             }
             
@@ -249,19 +251,17 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
     /// </summary>
     private IEnumerator ProcessSummaryRequest(string logContent)
     {
-        Debug.Log("로그 요약 요청 시작...");
+        Debug.LogFormat("로그 요약 요청 시작... {0}개의 로그 수집됨", recentLogs.Count);
         LogTrackingInfo("---로그 요약 요청 중---");
         
         // 요약용 시스템 프롬프트
         string systemPrompt = @"
-당신은 드론 트래킹 정보를 요약하는 AI 어시스턴트입니다.
-다음 로그 내용을 분석하여 드론이 추적 중인 대상의 움직임과 패턴을 3-4문장으로 간결하게 요약해주세요.
-요약에는 다음 정보가 포함되어야 합니다:
-1. 주요 움직임 패턴 (좌우, 상하, 접근, 후진 등)
-2. 움직임의 빈도나 규칙성
-3. 특이사항 (갑작스러운 변화, 일관된 패턴 등)
-
-한국어로 요약해주시고, 드론이 추적 중인 대상의 행동을 간결하고 명확하게 설명해주세요.
+You are an AI assistant summarizing drone tracking information.
+Please analyze the following log content to concisely summarize the movements and patterns of the target being tracked by the drone in 3-4 sentences.
+The summary should contain the following information:
+1. Key movement patterns (left and right, up and down, approach, reverse, etc.)
+2. the frequency or regularity of movement
+3. Unusual (sudden change, consistent pattern, etc.)
 ";
         
         // Ollama API 요청 형식 구성
