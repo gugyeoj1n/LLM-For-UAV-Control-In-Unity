@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -9,6 +9,10 @@ public class UIManager : MonoBehaviour
     public TMP_InputField promptInput;
     public TMP_Text droneResultText;
     public Button button;
+
+    public Transform droneResultContent;
+    public GameObject droneResultTextPrefab;
+    public ScrollRect droneResultScrollRect;
 
     private void Awake( )
     {
@@ -27,6 +31,10 @@ public class UIManager : MonoBehaviour
 
     public void SetDroneResultText( string target )
     {
-        droneResultText.text = target;
+        GameObject newResult = Instantiate( droneResultTextPrefab, droneResultContent );
+        newResult.GetComponent<TMP_Text>( ).text = target;
+        
+        // 하단 코드는 새 텍스트가 추가될 시 자동으로 스크롤을 최하단으로 조정하는 코드
+        // droneResultScrollRect.verticalNormalizedPosition = 0f;
     }
 }

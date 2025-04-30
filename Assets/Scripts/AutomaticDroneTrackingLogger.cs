@@ -204,10 +204,7 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
             
             // UI에 최신 로그 표시 (선택적)
             if (uiManager != null)
-            {
-                string displayText = string.Join("\n", recentLogs.ToArray());
-                uiManager.SetDroneResultText(displayText);
-            }
+                uiManager.SetDroneResultText(timestampedLog);
             
             Debug.Log($"[트래킹 로그] {logMessage}");
         }
@@ -334,9 +331,8 @@ public class AutomaticDroneTrackingLogger : MonoBehaviour
                 
                 // UI 업데이트
                 if (uiManager != null)
-                {
-                    uiManager.SetDroneResultText(logEntry);
-                }
+                    foreach (string line in logEntry.Split('\n'))
+                        uiManager.SetDroneResultText(line);
                 
                 Debug.Log($"요약 완료: {summary}");
             }
