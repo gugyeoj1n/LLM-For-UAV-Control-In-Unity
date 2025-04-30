@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody))]
 public class DroneController : MonoBehaviour
@@ -22,6 +23,10 @@ public class DroneController : MonoBehaviour
     private Vector3 returnPosition = new Vector3(0, 1, 0);
     private float targetAltitude;
     private float originalMoveSpeed;
+    
+    private bool isTracking = false;
+    public Transform trackingTarget;
+    public float trackingDistance = 5f; // 오브젝트와 유지할 거리
 
     private LidarScanner lidar;
 
@@ -44,6 +49,7 @@ public class DroneController : MonoBehaviour
         HandleRotation();
         HandleMovement();
         HandleReconnaissance(); // 자율 이동 수행
+        HandleTracking();
     }
 
     private void HandleAltitudeChange()
@@ -178,7 +184,45 @@ public class DroneController : MonoBehaviour
             }
         }
     }
+    
+    private void HandleTracking()
+    {
+        if (!isTracking || trackingTarget == null)
+            return;
 
+        Vector3 targetDir = (trackingTarget.position - transform.position);
+        Vector3 horizontalTargetDir = new Vector3(targetDir.x, 0f, targetDir.z);
+
+        // 바라보는 방향을 타겟 쪽으로 회전
+        if (horizontalTargetDir.magnitude > 0.1f)
+        {
+            Quaternion lookRotation = Quaternion.LookRotation(horizontalTargetDir.normalized);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 3f);
+        }
+
+        // 일정 거리 유지하며 따라가기
+        float currentDistance = Vector3.Distance(transform.position, trackingTarget.position);
+        float distanceDiff = currentDistance - trackingDistance;
+
+        if (Mathf.Abs(distanceDiff) > 0.2f) // 너무 가까워지거나 멀어지면
+        {
+            Vector3 moveDir = targetDir.normalized;
+            transform.position += moveDir * Mathf.Sign(distanceDiff) * moveSpeed * Time.deltaTime;
+        }
+    }
+
+    public void StartTracking( )
+    {
+        DroneCommand tracking = new DroneCommand { actionEnum = DroneCommand.DroneAction.Tracking };
+        StartCoroutine( ApplyTrackingCommand( tracking ) );
+    }
+
+    private IEnumerator ApplyTrackingCommand( DroneCommand command )
+    {
+        yield return new WaitForSeconds( 3f );
+        UIManager.instance.SetDroneResultText( "목표 대상 감시를 시작합니다." );
+        OnCommand( command );
+    }
 
     public void OnCommand(DroneCommand command)
     {
@@ -226,6 +270,14 @@ public class DroneController : MonoBehaviour
             case DroneCommand.DroneAction.Reconnaissance:
                 isReconnaissance = true;
                 yolo.enabled = true;
+                moveSpeed = command.Speed > 0 ? command.Speed : 2f;
+                break;
+            
+            case DroneCommand.DroneAction.Tracking:
+                isTracking = true;
+                yolo.enabled = false;
+
+                // trackingTarget = command.TargetTransform;
                 moveSpeed = command.Speed > 0 ? command.Speed : 2f;
                 break;
 
