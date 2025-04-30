@@ -1183,7 +1183,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07524b40af9856a46813b66e96edc777, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoSummarizeInterval: 10
+  autoSummarizeInterval: 8
+  logInterval: 0.8
+  isTrackingActive: 0
 --- !u!1 &611382591
 GameObject:
   m_ObjectHideFlags: 0
@@ -2243,7 +2245,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: "\u3147\n\u3147\n\u3147\n\u3147\n\u3147\n\u3147\n\u3147\n\u3147\n"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5a04492be2439fd498292a1453fa4583, type: 2}
   m_sharedMaterial: {fileID: 7973849020588018576, guid: 5a04492be2439fd498292a1453fa4583, type: 2}
@@ -2270,8 +2272,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 28
-  m_fontSizeBase: 28
+  m_fontSize: 18
+  m_fontSizeBase: 18
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -3706,7 +3708,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 488.6, y: -167.9}
-  m_SizeDelta: {x: 707.31, y: 168.9}
+  m_SizeDelta: {x: 824.9, y: 190.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1821879693
 MonoBehaviour:
@@ -3956,7 +3958,7 @@ Transform:
   m_GameObject: {fileID: 1903662100}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.133625, y: 15.219999, z: 0.305875}
+  m_LocalPosition: {x: 0.1695, y: 15.219999, z: 0.1846}
   m_LocalScale: {x: 0.0625, y: 30.549002, z: 0.0625}
   m_ConstrainProportionsScale: 0
   m_Children: []
