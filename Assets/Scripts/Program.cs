@@ -61,7 +61,7 @@ The drone has a current state, and your output should only change the parameters
 Input: User inputs a natural language drone command.
 Output: Convert to JSON with the following structure:
 {
-  ""action"": ""[action type: move, hover, altitude, rotate, return]"",
+  ""action"": ""[action type: move, hover, altitude, rotate, return, reconnaissance]"",
   ""altitude"": [altitude value (meters)],
   ""direction"": [x, y, z vector - each element between -1.0 and 1.0],
   ""speed"": [speed value (m/s)]
@@ -73,6 +73,7 @@ Action Types:
 - altitude: Change altitude
 - rotate: Rotate
 - return: Return to starting point
+- reconnaissance: Perform area reconnaissance/scouting
 
 Direction Vector Examples:
 - [1.0, 0.0, 0.0]: East/Right
@@ -173,6 +174,9 @@ Analyze the input command and return only the JSON object. Do not include any ex
                 case "return":
                     command.actionEnum = DroneCommand.DroneAction.Return;
                     break;
+                case "reconnaissance":
+                    command.actionEnum = DroneCommand.DroneAction.Reconnaissance;
+                    break;
                 default:
                     Debug.LogWarning($"알 수 없는 액션: {command.Action}. 기본값 Move로 설정합니다.");
                     command.actionEnum = DroneCommand.DroneAction.Move;
@@ -262,7 +266,7 @@ Analyze the input command and return only the JSON object. Do not include any ex
         }
         
         // 이동 명령이 있는 경우 방향 설정
-        if (newCommand.Action == "move" && newCommand.Direction != null && newCommand.Direction.Length == 3)
+        if ((newCommand.Action == "move" || newCommand.Action == "reconnaissance") && newCommand.Direction != null && newCommand.Direction.Length == 3)
         {
             if (!currentDroneState.Direction.SequenceEqual(newCommand.Direction))
             {
@@ -505,7 +509,7 @@ Analyze the input command and return only the JSON object. Do not include any ex
             float speed = float.Parse(speedDown.Groups[2].Value);
             result.Speed = speed;
         }
-        else if (result.Action == "move" && currentDroneState.Speed <= 0)
+        else if ((result.Action == "move" || result.Action == "reconnaissance") && currentDroneState.Speed <= 0)
         {
             // 이동 명령시 현재 속도가 0이면 기본 속도 설정
             result.Speed = 5.0f;
@@ -524,6 +528,13 @@ Analyze the input command and return only the JSON object. Do not include any ex
         else if (command.Contains("복귀") || command.Contains("돌아"))
         {
             result.Action = "return";
+        }
+                else if (command.Contains("정찰") || command.Contains("스캔") || command.Contains("탐색") || command.Contains("감시") || command.Contains("살펴") || command.Contains("reconnaissance"))
+        {
+            result.Action = "reconnaissance";
+            if (result.Speed <= 0) {
+                result.Speed = 3.0f; // 정찰은 조금 더 느린 속도로 설정
+            }
         }
         else if ((command.Contains("날아") || command.Contains("이동") || command.Contains("비행")) 
                 && string.IsNullOrEmpty(result.Action))

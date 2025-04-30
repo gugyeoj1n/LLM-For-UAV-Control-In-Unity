@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
 
 [RequireComponent(typeof(Rigidbody))]
 public class DroneController : MonoBehaviour
@@ -19,18 +18,20 @@ public class DroneController : MonoBehaviour
     private bool isRotating = false;
     private bool isReturning = false;
     private bool isReconnaissance = false;
+    private bool isTracking = false;
 
     private Vector3 returnPosition = new Vector3(0, 1, 0);
     private float targetAltitude;
     private float originalMoveSpeed;
-    
-    private bool isTracking = false;
-    public Transform trackingTarget;
-    public float trackingDistance = 5f; // 오브젝트와 유지할 거리
 
     private LidarScanner lidar;
 
     private RunYOLO yolo;
+    
+    // 드론 추적 관련 속성 추가
+    public Transform trackingTarget;
+    public float trackingDistance = 5f; // 추적 대상과 유지할 거리
+    public float trackingSpeedMultiplier = 0.8f; // 추적 시 속도 계수
 
     void Start()
     {
@@ -39,7 +40,7 @@ public class DroneController : MonoBehaviour
         originalMoveSpeed = moveSpeed;
 
         lidar = GetComponent<LidarScanner>();
-        yolo = FindFirstObjectByType<RunYOLO>( );
+        yolo = FindFirstObjectByType<RunYOLO>();
         yolo.enabled = false;
     }
 
@@ -49,7 +50,12 @@ public class DroneController : MonoBehaviour
         HandleRotation();
         HandleMovement();
         HandleReconnaissance(); // 자율 이동 수행
-        HandleTracking();
+        
+        // 추적 동작 처리
+        if (isTracking && trackingTarget != null)
+        {
+            HandleTracking();
+        }
     }
 
     private void HandleAltitudeChange()
@@ -185,43 +191,78 @@ public class DroneController : MonoBehaviour
         }
     }
     
+    // 드론 추적 처리 메서드
     private void HandleTracking()
     {
-        if (!isTracking || trackingTarget == null)
-            return;
-
-        Vector3 targetDir = (trackingTarget.position - transform.position);
-        Vector3 horizontalTargetDir = new Vector3(targetDir.x, 0f, targetDir.z);
-
-        // 바라보는 방향을 타겟 쪽으로 회전
-        if (horizontalTargetDir.magnitude > 0.1f)
+        if (trackingTarget == null) return;
+        
+        // 추적 대상을 향한 방향 계산
+        Vector3 directionToTarget = trackingTarget.position - transform.position;
+        float distanceToTarget = directionToTarget.magnitude;
+        
+        // 대상과의 거리가 너무 가까우면 뒤로 물러남
+        if (distanceToTarget < trackingDistance * 0.7f)
         {
-            Quaternion lookRotation = Quaternion.LookRotation(horizontalTargetDir.normalized);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 3f);
+            // 약간 뒤로 이동
+            Vector3 backwardDirection = -directionToTarget.normalized;
+            transform.rotation = Quaternion.Slerp(transform.rotation, 
+                                                  Quaternion.LookRotation(backwardDirection), 
+                                                  Time.deltaTime * 2f);
+            rb.linearVelocity = transform.forward * moveSpeed * 0.5f;
         }
-
-        // 일정 거리 유지하며 따라가기
-        float currentDistance = Vector3.Distance(transform.position, trackingTarget.position);
-        float distanceDiff = currentDistance - trackingDistance;
-
-        if (Mathf.Abs(distanceDiff) > 0.2f) // 너무 가까워지거나 멀어지면
+        // 적정 거리면 유지
+        else if (distanceToTarget < trackingDistance * 1.3f)
         {
-            Vector3 moveDir = targetDir.normalized;
-            transform.position += moveDir * Mathf.Sign(distanceDiff) * moveSpeed * Time.deltaTime;
+            // 대상을 바라보되 제자리 유지
+            transform.rotation = Quaternion.Slerp(transform.rotation, 
+                                                  Quaternion.LookRotation(directionToTarget), 
+                                                  Time.deltaTime * 3f);
+            rb.linearVelocity = Vector3.zero;
+        }
+        // 대상과 거리가 멀면 접근
+        else
+        {
+            // 추적 대상을 향해 이동
+            transform.rotation = Quaternion.Slerp(transform.rotation, 
+                                                  Quaternion.LookRotation(directionToTarget), 
+                                                  Time.deltaTime * 3f);
+            rb.linearVelocity = transform.forward * moveSpeed * trackingSpeedMultiplier;
+        }
+        
+        // 고도 유지 (추적 대상과 비슷한 고도 유지)
+        float targetY = trackingTarget.position.y;
+        float currentY = transform.position.y;
+        float yDiff = targetY - currentY;
+        
+        if (Mathf.Abs(yDiff) > 1.0f)
+        {
+            Vector3 velocity = rb.linearVelocity;
+            velocity.y = Mathf.Sign(yDiff) * verticalSpeed * 0.7f;
+            rb.linearVelocity = velocity;
         }
     }
-
-    public void StartTracking( )
+    
+    // 추적 시작 메서드
+    public void StartTracking()
     {
-        DroneCommand tracking = new DroneCommand { actionEnum = DroneCommand.DroneAction.Tracking };
-        StartCoroutine( ApplyTrackingCommand( tracking ) );
+        if (trackingTarget != null)
+        {
+            ResetAllStates();
+            isTracking = true;
+            moveSpeed = originalMoveSpeed * trackingSpeedMultiplier;
+            Debug.Log("추적 시작: " + trackingTarget.name);
+        }
+        else
+        {
+            Debug.LogWarning("추적 대상이 없습니다.");
+        }
     }
-
-    private IEnumerator ApplyTrackingCommand( DroneCommand command )
+    
+    // 추적 중지 메서드
+    public void StopTracking()
     {
-        yield return new WaitForSeconds( 3f );
-        UIManager.instance.SetDroneResultText( "목표 대상 감시를 시작합니다." );
-        OnCommand( command );
+        isTracking = false;
+        Debug.Log("추적 중지");
     }
 
     public void OnCommand(DroneCommand command)
@@ -244,7 +285,7 @@ public class DroneController : MonoBehaviour
 
             case DroneCommand.DroneAction.Hover:
                 isHovering = true;
-                yolo.enabled = false;
+                yolo.enabled = true; // YOLO 활성화하여 드론 감지 가능하도록 수정
                 moveSpeed = 0f;
                 rb.linearVelocity = Vector3.zero;
                 break;
@@ -272,14 +313,6 @@ public class DroneController : MonoBehaviour
                 yolo.enabled = true;
                 moveSpeed = command.Speed > 0 ? command.Speed : 2f;
                 break;
-            
-            case DroneCommand.DroneAction.Tracking:
-                isTracking = true;
-                yolo.enabled = false;
-
-                // trackingTarget = command.TargetTransform;
-                moveSpeed = command.Speed > 0 ? command.Speed : 2f;
-                break;
 
             default:
                 Debug.LogWarning($"알 수 없는 명령: {command.actionEnum}");
@@ -294,6 +327,7 @@ public class DroneController : MonoBehaviour
         isRotating = false;
         isReturning = false;
         isReconnaissance = false;
+        isTracking = false;
 
         rb.linearVelocity = Vector3.zero;
         moveSpeed = originalMoveSpeed;
