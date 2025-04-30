@@ -1136,6 +1136,7 @@ GameObject:
   m_Component:
   - component: {fileID: 577522014}
   - component: {fileID: 577522013}
+  - component: {fileID: 577522015}
   m_Layer: 0
   m_Name: LLM
   m_TagString: Untagged
@@ -1170,6 +1171,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &577522015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 577522012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07524b40af9856a46813b66e96edc777, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoSummarizeInterval: 10
 --- !u!1 &611382591
 GameObject:
   m_ObjectHideFlags: 0
@@ -1619,6 +1633,7 @@ MonoBehaviour:
   rotationSpeed: 100
   trackingTarget: {fileID: 0}
   trackingDistance: 20
+  trackingSpeedMultiplier: 0.8
 --- !u!4 &686543992 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
