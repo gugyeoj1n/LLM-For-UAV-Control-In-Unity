@@ -4,36 +4,38 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Rigidbody))]
 public class DroneController : MonoBehaviour
 {
+    [Header("Speed Settings")]
     public float moveSpeed = 5f;
     public float verticalSpeed = 3f;
     public float rotationSpeed = 100f;
 
-    private Rigidbody rb;
-    private Vector3 targetPosition;
-    private Quaternion targetRotation;
-
-    private bool isHovering = false;
-    private bool isMoving = false;
-    private bool isChangingAltitude = false;
-    private bool isRotating = false;
-    private bool isReturning = false;
-    private bool isReconnaissance = false;
-    private bool isTracking = false;
-
-    private Vector3 returnPosition = new Vector3(0, 1, 0);
-    private float targetAltitude;
-    private float originalMoveSpeed;
-
-    private LidarScanner lidar;
-
-    private RunYOLO yolo;
-    
-    // 드론 추적 관련 속성 추가
+    [Header("Tracking Settings")]
     public Transform trackingTarget;
-    public float trackingDistance = 5f; // 추적 대상과 유지할 거리
-    public float trackingSpeedMultiplier = 0.8f; // 추적 시 속도 계수
+    public float trackingDistance = 5f;
+    public float trackingSpeedMultiplier = 0.8f;
 
-    private AutomaticDroneTrackingLogger trackingLogger;
+    [Header("Internal State (ReadOnly)")]
+    public bool isHovering = false;
+    public bool isMoving = false;
+    public bool isChangingAltitude = false;
+    public bool isRotating = false;
+    public bool isReturning = false;
+    public bool isReconnaissance = false;
+    public bool isTracking = false;
+
+    [Header("Positions")]
+    public Vector3 returnPosition = new Vector3(0, 1, 0);
+    public Vector3 targetPosition;
+    public Quaternion targetRotation;
+    public float targetAltitude;
+
+    [Header("References")]
+    public LidarScanner lidar;
+    public RunYOLO yolo;
+    public AutomaticDroneTrackingLogger trackingLogger;
+
+    private Rigidbody rb;
+    private float originalMoveSpeed;
 
     void Start()
     {
@@ -54,12 +56,10 @@ public class DroneController : MonoBehaviour
 
     void Update()
     {
+        HandleMovement();
         HandleAltitudeChange();
         HandleRotation();
-        HandleMovement();
-        HandleReconnaissance(); // 자율 이동 수행
-        
-        // 추적 동작 처리
+        HandleReconnaissance();
         if (isTracking && trackingTarget != null)
         {
             HandleTracking();
@@ -73,25 +73,48 @@ public class DroneController : MonoBehaviour
         float currentAltitude = transform.position.y;
         float altitudeDifference = targetAltitude - currentAltitude;
 
+        Debug.Log($"{gameObject.name} [Altitude] 현재 고도: {currentAltitude}");
+        Debug.Log($"{gameObject.name} [Altitude] 목표 고도: {targetAltitude}");
+        Debug.Log($"{gameObject.name} [Altitude] 고도 차이: {altitudeDifference}");
+
         if (Mathf.Abs(altitudeDifference) > 0.1f)
         {
+            Debug.Log($"{gameObject.name} [Altitude] 이동 중 - 차이가 큼, 상승 또는 하강 시작");
+
             Vector3 currentVelocity = rb.linearVelocity;
+            Debug.Log($"{gameObject.name} [Altitude] 현재 속도(before): {currentVelocity}");
+
             currentVelocity.y = Mathf.Sign(altitudeDifference) * verticalSpeed;
+
+            Debug.Log($"{gameObject.name} [Altitude] Mathf.Sign 결과: {Mathf.Sign(altitudeDifference)}");
+            Debug.Log($"{gameObject.name} [Altitude] 새로운 Y속도: {currentVelocity.y}");
+
             rb.linearVelocity = currentVelocity;
+
+            Debug.Log($"{gameObject.name} [Altitude] 속도 적용 완료: {rb.linearVelocity}");
         }
         else
         {
+            Debug.Log($"{gameObject.name} [Altitude] 목표 고도 도달 - 고도 설정 및 속도 정지");
+
             Vector3 pos = transform.position;
             pos.y = targetAltitude;
             transform.position = pos;
 
             Vector3 currentVelocity = rb.linearVelocity;
+            Debug.Log($"{gameObject.name} [Altitude] 기존 속도(before): {currentVelocity}");
+
             currentVelocity.y = 0;
             rb.linearVelocity = currentVelocity;
 
+            Debug.Log($"{gameObject.name} [Altitude] 속도 after Y 제거: {rb.linearVelocity}");
+            Debug.Log($"{gameObject.name} [Altitude] 위치 보정 완료: {transform.position}");
+
             isChangingAltitude = false;
+            Debug.Log($"{gameObject.name} [Altitude] isChangingAltitude → false");
         }
     }
+
 
     private void HandleRotation()
     {
@@ -148,8 +171,6 @@ public class DroneController : MonoBehaviour
         {
             Vector3 dir = entry.Key;
             float dist = entry.Value;
-
-            // ✅ 디버그 선 추가 (안전 거리 기준 색상)
             Color rayColor = dist < lidar.safeDistance ? Color.red : Color.green;
             Debug.DrawRay(center, dir * dist, rayColor);
 
@@ -157,22 +178,19 @@ public class DroneController : MonoBehaviour
             {
                 dangerDetected = true;
                 dangerDirection = dir;
-                break; // 하나만 감지하면 바로
+                break;
             }
         }
 
         if (dangerDetected)
         {
-            // 🚨 위험 감지 시: 위험 방향의 반대 방향으로 회전
             Vector3 oppositeDirection = -dangerDirection;
             Quaternion targetRotation = Quaternion.LookRotation(oppositeDirection, Vector3.up);
-
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f); // 빠르게 회전
-            transform.position += transform.forward * moveSpeed * Time.deltaTime * 0.5f; // 반대 방향으로 천천히 이동
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+            transform.position += transform.forward * moveSpeed * Time.deltaTime * 0.5f;
         }
         else
         {
-            // 👍 위험이 없을 때: 가장 좋은 방향 찾아 이동
             Vector3 bestDir = Vector3.zero;
             float bestScore = -1;
 
@@ -180,9 +198,8 @@ public class DroneController : MonoBehaviour
             {
                 Vector3 dir = entry.Key;
                 float dist = entry.Value;
-
                 float angle = Vector3.Angle(transform.forward, dir);
-                float score = dist - angle * 0.1f; // 거리 우선 + 각도 고려
+                float score = dist - angle * 0.1f;
 
                 if (score > bestScore)
                 {
@@ -198,50 +215,35 @@ public class DroneController : MonoBehaviour
             }
         }
     }
-    
-    // 드론 추적 처리 메서드
+
     private void HandleTracking()
     {
         if (trackingTarget == null) return;
-        
-        // 추적 대상을 향한 방향 계산
+
         Vector3 directionToTarget = trackingTarget.position - transform.position;
         float distanceToTarget = directionToTarget.magnitude;
-        
-        // 대상과의 거리가 너무 가까우면 뒤로 물러남
+
         if (distanceToTarget < trackingDistance * 0.7f)
         {
-            // 약간 뒤로 이동
             Vector3 backwardDirection = -directionToTarget.normalized;
-            transform.rotation = Quaternion.Slerp(transform.rotation, 
-                                                  Quaternion.LookRotation(backwardDirection), 
-                                                  Time.deltaTime * 2f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(backwardDirection), Time.deltaTime * 2f);
             rb.linearVelocity = transform.forward * moveSpeed * 0.5f;
         }
-        // 적정 거리면 유지
         else if (distanceToTarget < trackingDistance * 1.3f)
         {
-            // 대상을 바라보되 제자리 유지
-            transform.rotation = Quaternion.Slerp(transform.rotation, 
-                                                  Quaternion.LookRotation(directionToTarget), 
-                                                  Time.deltaTime * 3f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToTarget), Time.deltaTime * 3f);
             rb.linearVelocity = Vector3.zero;
         }
-        // 대상과 거리가 멀면 접근
         else
         {
-            // 추적 대상을 향해 이동
-            transform.rotation = Quaternion.Slerp(transform.rotation, 
-                                                  Quaternion.LookRotation(directionToTarget), 
-                                                  Time.deltaTime * 3f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToTarget), Time.deltaTime * 3f);
             rb.linearVelocity = transform.forward * moveSpeed * trackingSpeedMultiplier;
         }
-        
-        // 고도 유지 (추적 대상과 비슷한 고도 유지)
+
         float targetY = trackingTarget.position.y;
         float currentY = transform.position.y;
         float yDiff = targetY - currentY;
-        
+
         if (Mathf.Abs(yDiff) > 1.0f)
         {
             Vector3 velocity = rb.linearVelocity;
@@ -249,20 +251,16 @@ public class DroneController : MonoBehaviour
             rb.linearVelocity = velocity;
         }
     }
-    
-    // 추적 시작 메서드
+
     public void StartTracking()
     {
         if (trackingTarget != null)
         {
-            ResetAllStates();
             isTracking = true;
             moveSpeed = originalMoveSpeed * trackingSpeedMultiplier;
-            // Debug.Log("추적 시작: " + trackingTarget.name);
-
             if (trackingLogger != null)
             {
-            trackingLogger.SetTrackingActive(true);
+                trackingLogger.SetTrackingActive(true);
             }
         }
         else
@@ -270,13 +268,11 @@ public class DroneController : MonoBehaviour
             Debug.LogWarning("추적 대상이 없습니다.");
         }
     }
-    
-    // 추적 중지 메서드
+
     public void StopTracking()
     {
         isTracking = false;
         Debug.Log("추적 중지");
-
         if (trackingLogger != null)
         {
             trackingLogger.SetTrackingActive(false);
@@ -287,36 +283,31 @@ public class DroneController : MonoBehaviour
     {
         Debug.Log($"[DroneController] 명령 수신: {command.actionEnum}, 속도: {command.Speed}, 방향: {command.DirectionVector}");
 
-        ResetAllStates();
-
         switch (command.actionEnum)
         {
             case DroneCommand.DroneAction.Move:
                 isMoving = true;
                 yolo.enabled = false;
                 targetPosition = command.DirectionVector;
-                moveSpeed = command.Speed > 0 ? command.Speed : 5f;
-
-                targetAltitude = command.Altitude;
-                isChangingAltitude = command.Altitude != 0;
+                moveSpeed = command.Speed > 0 ? command.Speed : originalMoveSpeed;
                 break;
 
             case DroneCommand.DroneAction.Hover:
                 isHovering = true;
-                yolo.enabled = true; // YOLO 활성화하여 드론 감지 가능하도록 수정
+                yolo.enabled = true;
                 moveSpeed = 0f;
                 rb.linearVelocity = Vector3.zero;
                 break;
 
             case DroneCommand.DroneAction.Altitude:
-                targetAltitude = command.Altitude;
                 yolo.enabled = false;
+                targetAltitude = command.Altitude;
                 isChangingAltitude = true;
                 break;
 
             case DroneCommand.DroneAction.Rotate:
-                isRotating = true;
                 yolo.enabled = false;
+                isRotating = true;
                 targetRotation = Quaternion.Euler(command.DirectionVector);
                 break;
 
@@ -336,18 +327,5 @@ public class DroneController : MonoBehaviour
                 Debug.LogWarning($"알 수 없는 명령: {command.actionEnum}");
                 break;
         }
-    }
-
-    private void ResetAllStates()
-    {
-        isHovering = false;
-        isMoving = false;
-        isRotating = false;
-        isReturning = false;
-        isReconnaissance = false;
-        isTracking = false;
-
-        rb.linearVelocity = Vector3.zero;
-        moveSpeed = originalMoveSpeed;
     }
 }
