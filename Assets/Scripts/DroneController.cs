@@ -222,20 +222,27 @@ public class DroneController : MonoBehaviour
 
         Vector3 directionToTarget = trackingTarget.position - transform.position;
         float distanceToTarget = directionToTarget.magnitude;
+        
+        // 디버깅 로그 추가
+        Debug.Log($"[Tracking] 대상과의 거리: {distanceToTarget}m, 설정된 추적 거리: {trackingDistance}m");
+        Debug.Log($"[Tracking] 최소 허용 거리: {trackingDistance * 0.7f}m, 최대 허용 거리: {trackingDistance * 1.3f}m");
 
         if (distanceToTarget < trackingDistance * 0.7f)
         {
+            Debug.Log("[Tracking] 너무 가까움 - 뒤로 물러남");
             Vector3 backwardDirection = -directionToTarget.normalized;
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(backwardDirection), Time.deltaTime * 2f);
             rb.linearVelocity = transform.forward * moveSpeed * 0.5f;
         }
         else if (distanceToTarget < trackingDistance * 1.3f)
         {
+            Debug.Log("[Tracking] 적절한 거리 - 제자리에서 대상 주시");
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToTarget), Time.deltaTime * 3f);
             rb.linearVelocity = Vector3.zero;
         }
         else
         {
+            Debug.Log("[Tracking] 너무 멈 - 대상을 향해 접근");
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToTarget), Time.deltaTime * 3f);
             rb.linearVelocity = transform.forward * moveSpeed * trackingSpeedMultiplier;
         }
@@ -246,18 +253,30 @@ public class DroneController : MonoBehaviour
 
         if (Mathf.Abs(yDiff) > 1.0f)
         {
+            Debug.Log($"[Tracking] Y축 조정: 차이 = {yDiff}m");
             Vector3 velocity = rb.linearVelocity;
             velocity.y = Mathf.Sign(yDiff) * verticalSpeed * 0.7f;
             rb.linearVelocity = velocity;
         }
     }
 
+
     public void StartTracking()
     {
         if (trackingTarget != null)
         {
+            Debug.Log($"[DroneController] 추적 시작: 대상과의 거리 = {Vector3.Distance(transform.position, trackingTarget.position)}m, 설정된 추적 거리 = {trackingDistance}m");
+            
+            // 다른 모드는 모두 비활성화
+            isMoving = false;
+            isHovering = false;
+            isReturning = false;
+            isReconnaissance = false;
+            
+            // 추적 모드 활성화
             isTracking = true;
             moveSpeed = originalMoveSpeed * trackingSpeedMultiplier;
+            
             if (trackingLogger != null)
             {
                 trackingLogger.SetTrackingActive(true);
@@ -285,54 +304,61 @@ public class DroneController : MonoBehaviour
         switch (command.actionEnum)
         {
             case DroneCommand.DroneAction.Move:
-                isMoving = true;
                 isHovering = false;
                 isReturning = false;
                 isReconnaissance = false;
+                isMoving = true;
                 yolo.enabled = false;
                 targetPosition = command.DirectionVector;
                 moveSpeed = command.Speed > 0 ? command.Speed : originalMoveSpeed;
                 break;
 
             case DroneCommand.DroneAction.Hover:
-                isHovering = true;
                 isMoving = false;
                 isReturning = false;
                 isReconnaissance = false;
+                isHovering = true;
                 yolo.enabled = true;
                 moveSpeed = 0f;
                 rb.linearVelocity = Vector3.zero;
                 break;
 
             case DroneCommand.DroneAction.Altitude:
-                isChangingAltitude = true;
                 isHovering = false;
+                isChangingAltitude = true;
                 yolo.enabled = false;
                 targetAltitude = command.Altitude;
                 break;
 
             case DroneCommand.DroneAction.Rotate:
+                isHovering = false;
                 isRotating = true;
                 yolo.enabled = false;
                 targetRotation = Quaternion.Euler(command.DirectionVector);
                 break;
 
             case DroneCommand.DroneAction.Return:
-                isReturning = true;
                 isMoving = false;
                 isHovering = false;
                 isReconnaissance = false;
+                isReturning = true;
                 yolo.enabled = false;
                 moveSpeed = originalMoveSpeed;
                 break;
 
             case DroneCommand.DroneAction.Reconnaissance:
-                isReconnaissance = true;
                 isMoving = false;
                 isHovering = false;
                 isReturning = false;
+                isReconnaissance = true;
                 yolo.enabled = true;
                 moveSpeed = command.Speed > 0 ? command.Speed : 2f;
+                break;
+                
+            case DroneCommand.DroneAction.Tracking:
+                StartTracking();
+                if (command.TrackingDistance > 0)
+                    trackingDistance = command.TrackingDistance;
                 break;
 
             default:

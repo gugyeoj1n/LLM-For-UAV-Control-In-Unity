@@ -133,7 +133,6 @@ Analyze the input command and return only the JSON object. Do not include any ex
     }
     
     // JSON 결과를 파일로 저장하는 메서드
-    // Program.cs의 SaveJsonToFile 메서드 부분을 수정
     private void SaveJsonToFile()
     {
         try
@@ -155,6 +154,7 @@ Analyze the input command and return only the JSON object. Do not include any ex
             command.Altitude = currentDroneState.Altitude;
             command.Direction = currentDroneState.Direction;
             command.Speed = currentDroneState.Speed;
+            command.TrackingDistance = currentDroneState.TrackingDistance;
             
             // 추적 거리 값도 전달 (여기를 추가)
             if (currentDroneState.Action == "tracking" && currentDroneState.TrackingDistance != 0)
