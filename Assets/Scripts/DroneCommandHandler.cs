@@ -16,6 +16,7 @@ public class DroneCommand
     public float Altitude;
     public float[] Direction; // Vector3 대신 배열로 받음
     public float Speed;
+    public float TrackingDistance; // 트래킹 거리 추가
 
     [NonSerialized]
     public Vector3 DirectionVector; // 수동으로 파싱한 Vector3
