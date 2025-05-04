@@ -32,7 +32,6 @@ public class Program : MonoBehaviour
         Debug.Log("새 명령 처리 전 - 현재 드론 상태:");
         PrintDroneState();
         
-        // 이하 기존 코드...
         StartCoroutine(ProcessCommands(promptInput));
     }
     
@@ -61,10 +60,11 @@ The drone has a current state, and your output should only change the parameters
 Input: User inputs a natural language drone command.
 Output: Convert to JSON with the following structure:
 {
-  ""action"": ""[action type: move, hover, altitude, rotate, return, reconnaissance]"",
+  ""action"": ""[action type: move, hover, altitude, rotate, return, reconnaissance, tracking]"",
   ""altitude"": [altitude value (meters)],
   ""direction"": [x, y, z vector - each element between -1.0 and 1.0],
-  ""speed"": [speed value (m/s)]
+  ""speed"": [speed value (m/s)],
+  ""trackingDistance"": [distance value for tracking (meters)]
 }
 
 Action Types:
@@ -74,6 +74,13 @@ Action Types:
 - rotate: Rotate
 - return: Return to starting point
 - reconnaissance: Perform area reconnaissance/scouting
+- tracking: Track a detected target
+
+Tracking Distance:
+- When the user wants to set tracking distance (e.g., ""10미터 거리에서 추적""), set action to ""tracking"" and trackingDistance to the specified value (e.g., 10.0)
+- For relative changes:
+  - To increase distance (e.g., ""3미터 더 멀리""): use positive value (e.g., 3.0)
+  - To decrease distance (e.g., ""2미터 더 가까이""): use negative value (e.g., -2.0)
 
 Direction Vector Examples:
 - [1.0, 0.0, 0.0]: East/Right
@@ -149,6 +156,31 @@ Analyze the input command and return only the JSON object. Do not include any ex
             command.Direction = currentDroneState.Direction;
             command.Speed = currentDroneState.Speed;
             
+            // 추적 거리 값도 전달 (여기를 추가)
+            if (currentDroneState.Action == "tracking" && currentDroneState.TrackingDistance != 0)
+            {
+                // Direction 벡터의 크기로 추적 거리를 표현
+                // 추적 거리가 양수면 기존 방향에 거리 적용, 음수면 반대 방향으로 설정
+                float distance = Mathf.Abs(currentDroneState.TrackingDistance);
+                Vector3 dir = new Vector3(0, 0, 1); // 기본 전방 방향
+                
+                if (command.Direction != null && command.Direction.Length == 3)
+                {
+                    Vector3 temp = new Vector3(command.Direction[0], command.Direction[1], command.Direction[2]);
+                    if (temp.magnitude > 0)
+                    {
+                        dir = temp.normalized;
+                    }
+                }
+                
+                // 추적 거리를 방향 벡터의 크기로 표현
+                command.Direction = new float[] { 
+                    dir.x * distance, 
+                    dir.y * distance, 
+                    dir.z * distance 
+                };
+            }
+            
             // FromJson 메서드에 있는 코드와 동일하게 처리
             if (command.Direction != null && command.Direction.Length == 3)
             {
@@ -176,6 +208,9 @@ Analyze the input command and return only the JSON object. Do not include any ex
                     break;
                 case "reconnaissance":
                     command.actionEnum = DroneCommand.DroneAction.Reconnaissance;
+                    break;
+                case "tracking":
+                    command.actionEnum = DroneCommand.DroneAction.Tracking;
                     break;
                 default:
                     Debug.LogWarning($"알 수 없는 액션: {command.Action}. 기본값 Move로 설정합니다.");
@@ -288,6 +323,23 @@ Analyze the input command and return only the JSON object. Do not include any ex
             Debug.Log("\n=== 드론 상태 업데이트됨 ===");
             PrintDroneState();
         }
+        
+        if (newCommand.Action == "tracking" && newCommand.TrackingDistance != 0)
+            {
+                currentDroneState.TrackingDistance = newCommand.TrackingDistance;
+                stateChanged = true;
+                
+                if (newCommand.TrackingDistance > 0)
+                {
+                    Debug.Log($"추적 거리 설정/증가: {newCommand.TrackingDistance}m");
+                }
+                else
+                {
+                    Debug.Log($"추적 거리 감소: {Math.Abs(newCommand.TrackingDistance)}m");
+                }
+            }
+        
+
     }
     
     // 현재 드론 상태를 출력하는 메서드
@@ -556,4 +608,5 @@ public class DroneCommandData
     public float Altitude { get; set; }
     public float[] Direction { get; set; } = new float[3];
     public float Speed { get; set; }
+    public float TrackingDistance { get; set; } // 추적 거리 필드 추가
 }
