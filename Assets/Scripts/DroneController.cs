@@ -282,11 +282,13 @@ public class DroneController : MonoBehaviour
     public void OnCommand(DroneCommand command)
     {
         Debug.Log($"[DroneController] 명령 수신: {command.actionEnum}, 속도: {command.Speed}, 방향: {command.DirectionVector}");
-
         switch (command.actionEnum)
         {
             case DroneCommand.DroneAction.Move:
                 isMoving = true;
+                isHovering = false;
+                isReturning = false;
+                isReconnaissance = false;
                 yolo.enabled = false;
                 targetPosition = command.DirectionVector;
                 moveSpeed = command.Speed > 0 ? command.Speed : originalMoveSpeed;
@@ -294,31 +296,41 @@ public class DroneController : MonoBehaviour
 
             case DroneCommand.DroneAction.Hover:
                 isHovering = true;
+                isMoving = false;
+                isReturning = false;
+                isReconnaissance = false;
                 yolo.enabled = true;
                 moveSpeed = 0f;
                 rb.linearVelocity = Vector3.zero;
                 break;
 
             case DroneCommand.DroneAction.Altitude:
+                isChangingAltitude = true;
+                isHovering = false;
                 yolo.enabled = false;
                 targetAltitude = command.Altitude;
-                isChangingAltitude = true;
                 break;
 
             case DroneCommand.DroneAction.Rotate:
-                yolo.enabled = false;
                 isRotating = true;
+                yolo.enabled = false;
                 targetRotation = Quaternion.Euler(command.DirectionVector);
                 break;
 
             case DroneCommand.DroneAction.Return:
                 isReturning = true;
+                isMoving = false;
+                isHovering = false;
+                isReconnaissance = false;
                 yolo.enabled = false;
                 moveSpeed = originalMoveSpeed;
                 break;
 
             case DroneCommand.DroneAction.Reconnaissance:
                 isReconnaissance = true;
+                isMoving = false;
+                isHovering = false;
+                isReturning = false;
                 yolo.enabled = true;
                 moveSpeed = command.Speed > 0 ? command.Speed : 2f;
                 break;
