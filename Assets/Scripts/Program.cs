@@ -597,6 +597,25 @@ Analyze the input command and return only the JSON object. Do not include any ex
             }
         }
 
+        // 추적 명령 인식 로직 추가
+        if (command.Contains("추적") || command.Contains("따라가") || command.Contains("tracking") || command.Contains("follow"))
+        {
+            result.Action = "tracking";
+            
+            // 거리 파싱 (예: "10미터 거리에서 추적")
+            var distanceMatch = Regex.Match(command, @"(\d+)\s*(미터|m|거리)");
+            if (distanceMatch.Success)
+            {
+                float distance = float.Parse(distanceMatch.Groups[1].Value);
+                result.TrackingDistance = distance;
+            }
+            else
+            {
+                // 기본 추적 거리 설정
+                result.TrackingDistance = 5.0f;
+            }
+        }
+
         return result;
     }
 }
