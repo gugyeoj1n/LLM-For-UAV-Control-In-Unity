@@ -368,7 +368,7 @@ public class RunYOLO : MonoBehaviour
                         controller.OnCommand(hoverCommand);
 
                         controller.trackingTarget = FindClosestDroneToBox(box);
-                        controller.StartTracking();
+                        // controller.StartTracking();
 
                         UIManager.instance.SetDroneResultText("드론이 감지되었습니다.");
                     }
