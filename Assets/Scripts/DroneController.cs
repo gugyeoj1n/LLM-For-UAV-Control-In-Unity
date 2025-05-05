@@ -224,6 +224,7 @@ public class DroneController : MonoBehaviour
         float distanceToTarget = directionToTarget.magnitude;
         
         // 디버깅 로그 추가
+        UIManager.instance.SetDistanceText( distanceToTarget );
         Debug.Log($"[Tracking] 대상과의 거리: {distanceToTarget}m, 설정된 추적 거리: {trackingDistance}m");
         Debug.Log($"[Tracking] 최소 허용 거리: {trackingDistance * 0.7f}m, 최대 허용 거리: {trackingDistance * 1.3f}m");
 
@@ -276,6 +277,8 @@ public class DroneController : MonoBehaviour
             // 추적 모드 활성화
             isTracking = true;
             moveSpeed = originalMoveSpeed * trackingSpeedMultiplier;
+            
+            UIManager.instance.distanceText.gameObject.SetActive( true );
             
             if (trackingLogger != null)
             {

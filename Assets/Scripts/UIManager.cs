@@ -10,6 +10,8 @@ public class UIManager : MonoBehaviour
     public TMP_Text droneResultText;
     public Button button;
 
+    public TMP_Text distanceText;
+    
     public Transform droneResultContent;
     public GameObject droneResultTextPrefab;
     public ScrollRect droneResultScrollRect;
@@ -36,5 +38,10 @@ public class UIManager : MonoBehaviour
         
         // 하단 코드는 새 텍스트가 추가될 시 자동으로 스크롤을 최하단으로 조정하는 코드
         // droneResultScrollRect.verticalNormalizedPosition = 0f;
+    }
+
+    public void SetDistanceText(float value)
+    {
+        distanceText.text = "대상과의 거리 : " + Mathf.RoundToInt(value) + "m";
     }
 }
