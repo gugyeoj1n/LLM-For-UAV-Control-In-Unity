@@ -1926,6 +1926,7 @@ MonoBehaviour:
     Altitude: 0
     Direction: []
     Speed: 2
+    TrackingDistance: 0
 --- !u!114 &686543994
 MonoBehaviour:
   m_ObjectHideFlags: 0

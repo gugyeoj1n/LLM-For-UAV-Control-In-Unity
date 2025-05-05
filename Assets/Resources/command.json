@@ -1,11 +1,11 @@
 {
-  "Action": "hover",
-  "Altitude": 20.0,
+  "Action": "tracking",
+  "Altitude": 0.0,
   "Direction": [
     0.0,
     0.0,
     0.0
   ],
   "Speed": 0.0,
-  "TrackingDistance": 30.0
+  "TrackingDistance": 10.0
 }

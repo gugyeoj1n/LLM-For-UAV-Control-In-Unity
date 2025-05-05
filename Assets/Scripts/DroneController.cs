@@ -356,9 +356,9 @@ public class DroneController : MonoBehaviour
                 break;
                 
             case DroneCommand.DroneAction.Tracking:
-                StartTracking();
                 if (command.TrackingDistance > 0)
                     trackingDistance = command.TrackingDistance;
+                StartTracking();
                 break;
 
             default:
