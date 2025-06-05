@@ -2070,6 +2070,7 @@ GameObject:
   - component: {fileID: 1211360749}
   - component: {fileID: 1211360748}
   - component: {fileID: 1211360747}
+  - component: {fileID: 1211360750}
   m_Layer: 0
   m_Name: Target Satellite
   m_TagString: Untagged
@@ -2151,6 +2152,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1211360750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1211360746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7afd0636d464cf744874eee155b7f711, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  orbitRadius: 30
+  orbitSpeed: 1
+  earthPosition: {x: 0, y: 0, z: 0}
+  orbitAxis: {x: 0, y: 1, z: 0}
+  startAngle: 0
+  currentAngle: 0
+  currentOrbitPosition: {x: 0, y: 0, z: 0}
 --- !u!1 &1234410065
 GameObject:
   m_ObjectHideFlags: 0
@@ -2415,6 +2435,7 @@ GameObject:
   - component: {fileID: 1240100928}
   - component: {fileID: 1240100927}
   - component: {fileID: 1240100926}
+  - component: {fileID: 1240100930}
   - component: {fileID: 1240100929}
   m_Layer: 0
   m_Name: Main Satellite
@@ -2491,7 +2512,7 @@ Transform:
   m_GameObject: {fileID: 1240100925}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 28.6, y: 0, z: 2.784}
+  m_LocalPosition: {x: 28.595, y: 0, z: 2.781}
   m_LocalScale: {x: 10, y: 10, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2516,6 +2537,25 @@ MonoBehaviour:
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
+--- !u!114 &1240100930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1240100925}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7afd0636d464cf744874eee155b7f711, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  orbitRadius: 30
+  orbitSpeed: 1
+  earthPosition: {x: 0, y: 0, z: 0}
+  orbitAxis: {x: 0, y: 1, z: 0}
+  startAngle: 10
+  currentAngle: 0
+  currentOrbitPosition: {x: 0, y: 0, z: 0}
 --- !u!1 &1302009045
 GameObject:
   m_ObjectHideFlags: 0
