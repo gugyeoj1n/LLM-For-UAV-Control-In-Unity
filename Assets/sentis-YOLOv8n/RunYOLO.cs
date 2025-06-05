@@ -266,7 +266,7 @@ public class RunYOLO : MonoBehaviour
 
     void SetupInput()
     {
-        Camera droneCamera = GameObject.Find("DroneCamera").GetComponent<Camera>();
+        Camera droneCamera = GetComponent<Camera>();
         droneCamera.targetTexture = targetRT;
     }
 
@@ -324,7 +324,7 @@ public class RunYOLO : MonoBehaviour
             };
             
             // 드론 감지 처리
-            if (!string.IsNullOrEmpty(box.label) && box.label.Trim().Equals("drone", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(box.label) && box.label.Trim().Equals("satellite", StringComparison.OrdinalIgnoreCase))
             {
                 droneDetected = true;
 
