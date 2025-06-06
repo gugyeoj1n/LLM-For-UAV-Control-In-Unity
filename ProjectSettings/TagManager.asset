@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Drone
+  - Satellite
   layers:
   - Default
   - TransparentFX

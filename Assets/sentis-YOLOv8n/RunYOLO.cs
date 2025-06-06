@@ -62,8 +62,8 @@ public class RunYOLO : MonoBehaviour
         public string label;
     }
 
-    // 드론 추적을 위한 클래스
-    private class DroneTracker
+    // 위성 추적을 위한 클래스
+    private class SatelliteTracker
     {
         public Vector2 position; // 화면 상의 위치 (중심점)
         public Vector2 size;     // 화면 상의 크기
@@ -76,7 +76,7 @@ public class RunYOLO : MonoBehaviour
         public float xVariation = 0f;
         public float yVariation = 0f;
         
-        public DroneTracker(Vector2 pos, Vector2 sz, string lbl)
+        public SatelliteTracker(Vector2 pos, Vector2 sz, string lbl)
         {
             position = pos;
             size = sz;
@@ -214,12 +214,12 @@ public class RunYOLO : MonoBehaviour
         }
     }
     
-    // 드론 추적기 딕셔너리 - 화면에 여러 드론이 있을 경우 각각 추적
-    private Dictionary<string, DroneTracker> droneTrackers = new Dictionary<string, DroneTracker>();
+    // 위성 추적기 딕셔너리 - 화면에 여러 위성이 있을 경우 각각 추적
+    private Dictionary<string, SatelliteTracker> SatelliteTrackers = new Dictionary<string, SatelliteTracker>();
     
-    // 가장 최근에 감지된 드론 정보
-    private DroneTracker latestDetectedDrone = null;
-    private float lastDroneDetectionTime = 0f;
+    // 가장 최근에 감지된 위성 정보
+    private SatelliteTracker latestDetectedSatellite = null;
+    private float lastSatelliteDetectionTime = 0f;
 
     void Start()
     {
@@ -227,6 +227,14 @@ public class RunYOLO : MonoBehaviour
         Screen.orientation = ScreenOrientation.LandscapeLeft;
 
         labels = classesAsset.text.Split('\n');
+        
+        // 디버그: 로드된 라벨 목록 출력
+        Debug.Log($"총 {labels.Length}개의 라벨이 로드되었습니다:");
+        for (int i = 0; i < Mathf.Min(labels.Length, 10); i++)
+        {
+            Debug.Log($"라벨 {i}: '{labels[i]}'");
+        }
+        
         LoadModel();
 
         targetRT = new RenderTexture(imageWidth, imageHeight, 0);
@@ -266,8 +274,8 @@ public class RunYOLO : MonoBehaviour
 
     void SetupInput()
     {
-        Camera droneCamera = GetComponent<Camera>();
-        droneCamera.targetTexture = targetRT;
+        Camera SatelliteCamera = GetComponent<Camera>();
+        SatelliteCamera.targetTexture = targetRT;
     }
 
     private void Update()
@@ -279,19 +287,16 @@ public class RunYOLO : MonoBehaviour
             Application.Quit();
         }
         
-        // 일정 시간 동안 드론이 감지되지 않으면 상태 메시지 업데이트
-        if (latestDetectedDrone != null && Time.time - lastDroneDetectionTime > 3.0f)
+        // 일정 시간 동안 위성이 감지되지 않으면 상태 메시지 업데이트
+        if (latestDetectedSatellite != null && Time.time - lastSatelliteDetectionTime > 3.0f)
         {
-            UIManager.instance.SetDroneResultText("적 드론이 시야에서 사라졌습니다.");
-            latestDetectedDrone = null;
+            UIManager.instance.SetSatelliteResultText("적 위성이 시야에서 사라졌습니다.");
+            latestDetectedSatellite = null;
         }
     }
 
     public void ExecuteML()
     {
-        currentFrameBoxCount = 0;
-        ClearAnnotations();
-
         displayImage.texture = targetRT;
 
         using Tensor<float> inputTensor = new Tensor<float>(new TensorShape(1, 3, imageHeight, imageWidth));
@@ -300,6 +305,9 @@ public class RunYOLO : MonoBehaviour
 
         using var output = (worker.PeekOutput("output_0") as Tensor<float>).ReadbackAndClone();
         using var labelIDs = (worker.PeekOutput("output_1") as Tensor<int>).ReadbackAndClone();
+        
+        // 디버그: 출력 텐서 정보
+        Debug.Log($"출력 텐서 크기: {output.shape}, 라벨 텐서 크기: {labelIDs.shape}");
 
         float displayWidth = displayImage.rectTransform.rect.width;
         float displayHeight = displayImage.rectTransform.rect.height;
@@ -307,11 +315,14 @@ public class RunYOLO : MonoBehaviour
         float scaleX = displayWidth / imageWidth;
         float scaleY = displayHeight / imageHeight;
 
-        // 이 프레임에 감지된 드론 ID 추적
-        List<string> detectedDroneIds = new List<string>();
-        bool droneDetected = false;
+        // 이 프레임에 감지된 위성 ID 추적
+        List<string> detectedSatelliteIds = new List<string>();
+        bool SatelliteDetected = false;
+        int satelliteBoxIndex = 0; // 위성 박스를 위한 별도 인덱스
 
         int boxesFound = output.shape[0];
+        Debug.Log($"총 {boxesFound}개의 바운딩 박스가 감지되었습니다 (처리할 개수: {Mathf.Min(boxesFound, 200)})");
+        
         for (int n = 0; n < Mathf.Min(boxesFound, 200); n++)
         {
             var box = new BoundingBox
@@ -323,170 +334,199 @@ public class RunYOLO : MonoBehaviour
                 label = labels[labelIDs[n]],
             };
             
-            // 드론 감지 처리
+            // 디버그: 감지된 모든 라벨 출력
+            if (!string.IsNullOrEmpty(box.label))
+            {
+                Debug.Log($"감지된 객체: '{box.label}' (인덱스: {labelIDs[n]}, 신뢰도: {output[n, 4]:F3})");
+            }
+            
+            // 위성 감지 처리
             if (!string.IsNullOrEmpty(box.label) && box.label.Trim().Equals("satellite", StringComparison.OrdinalIgnoreCase))
             {
-                droneDetected = true;
+                SatelliteDetected = true;
 
-                // 드론 위치와 크기 계산
-                Vector2 dronePos = new Vector2(box.centerX + displayWidth / 2, box.centerY + displayHeight / 2); // 화면 좌표로 변환
-                Vector2 droneSize = new Vector2(box.width, box.height);
+                // 위성 위치와 크기 계산
+                Vector2 SatellitePos = new Vector2(box.centerX + displayWidth / 2, box.centerY + displayHeight / 2); // 화면 좌표로 변환
+                Vector2 SatelliteSize = new Vector2(box.width, box.height);
 
-                // 드론 ID 생성 (현재는 단순히 인덱스 사용)
-                string droneId = "drone_" + n;
-                detectedDroneIds.Add(droneId);
+                // 위성 ID 생성 (현재는 단순히 인덱스 사용)
+                string SatelliteId = "Satellite_" + n;
+                detectedSatelliteIds.Add(SatelliteId);
 
-                bool isNewDrone = !droneTrackers.ContainsKey(droneId);
+                bool isNewSatellite = !SatelliteTrackers.ContainsKey(SatelliteId);
 
                 // 위치 업데이트 또는 새로 추가
-                if (isNewDrone)
+                if (isNewSatellite)
                 {
-                    droneTrackers[droneId] = new DroneTracker(dronePos, droneSize, box.label);
+                    SatelliteTrackers[SatelliteId] = new SatelliteTracker(SatellitePos, SatelliteSize, box.label);
                 }
                 else
                 {
-                    droneTrackers[droneId].UpdatePosition(dronePos, droneSize);
+                    SatelliteTrackers[SatelliteId].UpdatePosition(SatellitePos, SatelliteSize);
                 }
 
-                // 가장 최근 감지된 드론으로 업데이트
-                latestDetectedDrone = droneTrackers[droneId];
-                lastDroneDetectionTime = Time.time;
+                // 가장 최근 감지된 위성으로 업데이트
+                latestDetectedSatellite = SatelliteTrackers[SatelliteId];
+                lastSatelliteDetectionTime = Time.time;
 
-                if (isNewDrone)
+                // 위성 감지시 UI 업데이트 (매번 업데이트하여 실시간 정보 제공)
+                UpdateSatelliteStatusUI(SatelliteId);
+                Debug.Log("위성 감지! 움직임: " + latestDetectedSatellite.movementPattern);
+
+                if (isNewSatellite)
                 {
-                    // 새 드론일 때만 수행할 작업들
-                    UpdateDroneStatusUI(droneId);
-                    Debug.Log("드론 감지! 움직임: " + latestDetectedDrone.movementPattern);
-
-                    DroneController controller = FindFirstObjectByType<DroneController>();
+                    // 새 위성일 때만 수행할 작업들
+                    SatelliteController controller = FindFirstObjectByType<SatelliteController>();
                     if (controller != null)
                     {
-                        DroneCommand hoverCommand = new DroneCommand
+                        SatelliteCommand hoverCommand = new SatelliteCommand
                         {
-                            actionEnum = DroneCommand.DroneAction.Hover
+                            actionEnum = SatelliteCommand.SatelliteAction.Hover
                         };
                         controller.OnCommand(hoverCommand);
 
-                        controller.trackingTarget = FindClosestDroneToBox(box);
+                        controller.trackingTarget = FindClosestSatelliteToBox(box);
                         // controller.StartTracking();
-
-                        UIManager.instance.SetDroneResultText("드론이 감지되었습니다.");
                     }
                 }
+                
+                satelliteBoxIndex++;
             }
-
-            
-            DrawBox(box, n, displayHeight * 0.05f);
-            currentFrameBoxCount++;
         }
         
-        // 이번 프레임에 감지되지 않은 드론 제거
-        List<string> droneIdsToRemove = new List<string>();
-        foreach (var kvp in droneTrackers)
+        // 이번 프레임에 감지되지 않은 위성 제거
+        List<string> SatelliteIdsToRemove = new List<string>();
+        foreach (var kvp in SatelliteTrackers)
         {
-            if (!detectedDroneIds.Contains(kvp.Key))
+            if (!detectedSatelliteIds.Contains(kvp.Key))
             {
                 if (Time.time - kvp.Value.lastUpdateTime > 3.0f) // 3초 이상 감지되지 않으면 제거
                 {
-                    droneIdsToRemove.Add(kvp.Key);
+                    SatelliteIdsToRemove.Add(kvp.Key);
                 }
             }
         }
         
-        foreach (string id in droneIdsToRemove)
+        foreach (string id in SatelliteIdsToRemove)
         {
-            droneTrackers.Remove(id);
+            SatelliteTrackers.Remove(id);
         }
+        
+        // 위성이 감지되지 않았을 때 UI 업데이트
+        if (!SatelliteDetected && UIManager.instance != null)
+        {
+            if (Time.time - lastSatelliteDetectionTime > 2.0f) // 2초 이상 감지되지 않으면
+            {
+                UIManager.instance.SetSatelliteResultText("현재 감지된 위성이 없습니다.\n스캔 중...");
+            }
+        }
+        
+        // 디버그: 위성 감지 상태 요약
+        Debug.Log($"이번 프레임에서 {detectedSatelliteIds.Count}개의 위성이 감지되었습니다. 총 추적 중인 위성: {SatelliteTrackers.Count}개");
     }
     
-    // UI에 드론 움직임 정보 업데이트
-    private void UpdateDroneStatusUI(string droneId)
+    // UI에 위성 움직임 정보 업데이트
+    private void UpdateSatelliteStatusUI(string SatelliteId)
     {
-        if (!droneTrackers.ContainsKey(droneId) || UIManager.instance == null)
+        if (!SatelliteTrackers.ContainsKey(SatelliteId))
+        {
+            Debug.LogWarning($"위성 ID '{SatelliteId}'를 찾을 수 없습니다.");
             return;
+        }
+        
+        if (UIManager.instance == null)
+        {
+            Debug.LogWarning("UIManager.instance가 null입니다. UI가 제대로 설정되었는지 확인하세요.");
+            return;
+        }
             
-        DroneTracker drone = droneTrackers[droneId];
+        SatelliteTracker Satellite = SatelliteTrackers[SatelliteId];
         
         // UI에 표시할 메시지 생성
         StringBuilder message = new StringBuilder();
-        message.AppendLine("===== 적 드론 감지 =====");
+        message.AppendLine("===== 적 위성 감지 =====");
+        
+        // 감지된 위성 개수 표시
+        message.AppendLine($"감지된 위성 수: {SatelliteTrackers.Count}개");
+        message.AppendLine("");
         
         // 움직임 패턴 설명
-        message.AppendLine($"적 드론이 {drone.movementPattern}");
-        
-        // 움직임 분석
-        if (drone.positionHistory.Count > 5)
-        {
-            // 이동 방향 추정
-            Vector2 recentMovement = drone.position - drone.positionHistory[drone.positionHistory.Count - 5];
-            
-            // 좀 더 구체적인 분석
-            if (recentMovement.magnitude > 20f) // 화면 좌표 기준 임계값
-            {
-                if (Mathf.Abs(recentMovement.x) > Mathf.Abs(recentMovement.y))
-                {
-                    // 수평 이동이 더 큼
-                    string direction = recentMovement.x > 0 ? "오른쪽" : "왼쪽";
-                    message.AppendLine($"최근 {direction}으로 이동하는 경향이 있습니다.");
-                }
-                else
-                {
-                    // 수직 이동이 더 큼
-                    string direction = recentMovement.y > 0 ? "위쪽" : "아래쪽";
-                    message.AppendLine($"최근 {direction}으로 이동하는 경향이 있습니다.");
-                }
-            }
-            
-            // 크기 변화로 거리 추정
-            float initialSize = drone.positionHistory.Count > 9 
-                ? Vector2.Distance(Vector2.zero, drone.positionHistory[0]) 
-                : 0;
-            float currentSize = Vector2.Distance(Vector2.zero, drone.size);
-            
-            if (initialSize > 0 && Mathf.Abs(currentSize - initialSize) / initialSize > 0.2f)
-            {
-                if (currentSize > initialSize)
-                {
-                    message.AppendLine("드론이 접근하고 있습니다.");
-                }
-                else
-                {
-                    message.AppendLine("드론이 멀어지고 있습니다.");
-                }
-            }
-        }
+        message.AppendLine($"• 상태: {Satellite.movementPattern}");
         
         // 화면상 위치 설명
         float screenCenterX = displayImage.rectTransform.rect.width / 2;
         float screenCenterY = displayImage.rectTransform.rect.height / 2;
         
-        if (Mathf.Abs(drone.position.x - screenCenterX) > screenCenterX * 0.3f ||
-            Mathf.Abs(drone.position.y - screenCenterY) > screenCenterY * 0.3f)
+        // 위치를 백분율로 계산
+        float posX = (Satellite.position.x / displayImage.rectTransform.rect.width) * 100f;
+        float posY = (Satellite.position.y / displayImage.rectTransform.rect.height) * 100f;
+        
+        message.AppendLine($"• 위치: 화면의 {posX:F0}%, {posY:F0}% 지점");
+        
+        // 방향 설명
+        string horizontalPos = Satellite.position.x < screenCenterX * 0.8f ? "왼쪽" : 
+                              Satellite.position.x > screenCenterX * 1.2f ? "오른쪽" : "중앙";
+        string verticalPos = Satellite.position.y < screenCenterY * 0.8f ? "아래쪽" : 
+                            Satellite.position.y > screenCenterY * 1.2f ? "위쪽" : "중앙";
+        
+        if (horizontalPos != "중앙" || verticalPos != "중앙")
         {
-            // 화면 중앙에서 멀리 있음
-            string horizontalPos = drone.position.x < screenCenterX * 0.7f ? "왼쪽" : "오른쪽";
-            string verticalPos = drone.position.y < screenCenterY * 0.7f ? "아래쪽" : "위쪽";
-            
-            message.AppendLine($"화면 {horizontalPos} {verticalPos}에 위치하고 있습니다.");
+            message.AppendLine($"• 방향: 화면 {horizontalPos} {verticalPos}");
         }
         else
         {
-            message.AppendLine("화면 중앙 부근에 위치하고 있습니다.");
+            message.AppendLine("• 방향: 화면 중앙 부근");
         }
         
-        // 위험 평가
-        if (drone.size.magnitude > screenCenterX * 0.3f) // 드론 크기가 화면의 30% 이상
+        // 움직임 분석
+        if (Satellite.positionHistory.Count > 5)
         {
-            message.AppendLine("경고: 드론이 매우 가까이 있습니다!");
+            Vector2 recentMovement = Satellite.position - Satellite.positionHistory[Satellite.positionHistory.Count - 5];
+            
+            if (recentMovement.magnitude > 20f)
+            {
+                float speed = recentMovement.magnitude / 5f; // 픽셀/프레임
+                message.AppendLine($"• 이동 속도: {speed:F1} 픽셀/프레임");
+                
+                if (Mathf.Abs(recentMovement.x) > Mathf.Abs(recentMovement.y))
+                {
+                    string direction = recentMovement.x > 0 ? "오른쪽" : "왼쪽";
+                    message.AppendLine($"• 주 이동 방향: {direction}");
+                }
+                else
+                {
+                    string direction = recentMovement.y > 0 ? "위쪽" : "아래쪽";
+                    message.AppendLine($"• 주 이동 방향: {direction}");
+                }
+            }
+        }
+        
+        // 크기 정보
+        message.AppendLine($"• 크기: {Satellite.size.x:F0} × {Satellite.size.y:F0} 픽셀");
+        
+        // 위험 평가
+        if (Satellite.size.magnitude > screenCenterX * 0.3f)
+        {
+            message.AppendLine("");
+            message.AppendLine("⚠️ 경고: 위성이 매우 가까이 있습니다!");
+        }
+        
+        // 추적 시간
+        float trackingTime = Time.time - Satellite.lastUpdateTime;
+        if (trackingTime < 1f)
+        {
+            message.AppendLine($"• 추적 상태: 실시간 감지");
         }
         
         // UI 업데이트
-        UIManager.instance.SetDroneResultText(message.ToString());
+        string finalMessage = message.ToString();
+        Debug.Log($"UI 텍스트 업데이트: {finalMessage.Substring(0, Mathf.Min(100, finalMessage.Length))}...");
+        UIManager.instance.SetSatelliteResultText(finalMessage);
     }
     
-    private Transform FindClosestDroneToBox(BoundingBox box)
+    private Transform FindClosestSatelliteToBox(BoundingBox box)
     {
-        GameObject[] drones = GameObject.FindGameObjectsWithTag("Drone"); // 또는 FindObjectsByType<DroneIdentifier>()
+        GameObject[] Satellites = GameObject.FindGameObjectsWithTag("Satellite"); // 또는 FindObjectsByType<SatelliteIdentifier>()
 
         Vector2 screenCenter = new Vector2(displayImage.rectTransform.rect.width / 2, displayImage.rectTransform.rect.height / 2);
         Vector2 boxCenter = screenCenter + new Vector2(box.centerX, -box.centerY); // UGUI 기준 위치 보정
@@ -494,9 +534,9 @@ public class RunYOLO : MonoBehaviour
         float minDistance = float.MaxValue;
         Transform closest = null;
 
-        foreach (var drone in drones)
+        foreach (var Satellite in Satellites)
         {
-            Vector3 worldPos = drone.transform.position;
+            Vector3 worldPos = Satellite.transform.position;
             Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
             Vector2 localPoint;
 
@@ -507,7 +547,7 @@ public class RunYOLO : MonoBehaviour
             if (dist < minDistance)
             {
                 minDistance = dist;
-                closest = drone.transform;
+                closest = Satellite.transform;
             }
         }
 
@@ -517,40 +557,45 @@ public class RunYOLO : MonoBehaviour
     public void DrawBox(BoundingBox box, int id, float fontSize)
     {
         GameObject panel;
-        if (id < boxPool.Count)
+        
+        // 박스 풀에서 재사용하거나 새로 생성
+        if (id < boxPool.Count && boxPool[id] != null)
         {
             panel = boxPool[id];
-            panel.SetActive(true);
         }
         else
         {
+            // 새 박스 생성
             panel = CreateNewBox(Color.yellow);
+            
+            // 박스 풀 크기 조정
+            while (boxPool.Count <= id)
+            {
+                boxPool.Add(null);
+            }
+            boxPool[id] = panel;
         }
 
+        // 박스 활성화 및 위치/크기 설정
+        panel.SetActive(true);
         panel.transform.localPosition = new Vector3(box.centerX, -box.centerY);
         RectTransform rt = panel.GetComponent<RectTransform>();
         rt.sizeDelta = new Vector2(box.width, box.height);
 
+        // 텍스트 라벨 업데이트 (위성 전용)
         var label = panel.GetComponentInChildren<Text>();
         
-        // 드론의 경우 움직임 패턴도 함께 표시
-        if (!string.IsNullOrEmpty(box.label) && box.label.Trim().Equals("drone", StringComparison.OrdinalIgnoreCase))
+        string SatelliteId = "Satellite_" + id;
+        if (SatelliteTrackers.ContainsKey(SatelliteId) && SatelliteTrackers[SatelliteId].positionHistory.Count > 3)
         {
-            string droneId = "drone_" + id;
-            if (droneTrackers.ContainsKey(droneId) && droneTrackers[droneId].positionHistory.Count > 3)
-            {
-                label.text = $"{box.label}: {droneTrackers[droneId].movementPattern}";
-            }
-            else
-            {
-                label.text = box.label;
-            }
+            label.text = $"{box.label}: {SatelliteTrackers[SatelliteId].movementPattern}";
         }
         else
         {
-            label.text = box.label;
+            label.text = $"{box.label}: 감지됨";
         }
         
+        // 텍스트 속성 설정
         label.fontSize = (int)fontSize;
     }
 
@@ -581,16 +626,29 @@ public class RunYOLO : MonoBehaviour
         rt2.anchorMin = new Vector2(0, 0);
         rt2.anchorMax = new Vector2(1, 1);
 
-        boxPool.Add(panel);
+        // boxPool에 추가는 DrawBox에서 처리하므로 여기서는 제거
         return panel;
+    }
+
+    public void ClearAllAnnotations()
+    {
+        // 모든 박스를 완전히 파괴하고 풀 리셋
+        for (int i = 0; i < boxPool.Count; i++)
+        {
+            if (boxPool[i] != null)
+            {
+                DestroyImmediate(boxPool[i]);
+                boxPool[i] = null; // null로 설정하여 완전히 정리
+            }
+        }
+        boxPool.Clear();
+        currentFrameBoxCount = 0;
     }
 
     public void ClearAnnotations()
     {
-        for (int i = 0; i < boxPool.Count; i++)
-        {
-            boxPool[i].SetActive(i < currentFrameBoxCount);
-        }
+        // 현재는 ClearAllAnnotations가 모든 것을 처리하므로 불필요
+        // 하지만 호환성을 위해 유지
     }
 
     private void OnDestroy()

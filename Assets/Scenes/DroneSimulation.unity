@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 4477802}
   - component: {fileID: 4477801}
   m_Layer: 5
-  m_Name: Drone Camera Display
+  m_Name: Satellite Camera Display
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -452,7 +452,7 @@ GameObject:
   - component: {fileID: 250075853}
   - component: {fileID: 250075852}
   m_Layer: 5
-  m_Name: Drone Camera Text
+  m_Name: Satellite Camera Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -497,7 +497,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Drone Camera Display
+  m_text: Satellite Camera Display
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5a04492be2439fd498292a1453fa4583, type: 2}
   m_sharedMaterial: {fileID: 7973849020588018576, guid: 5a04492be2439fd498292a1453fa4583, type: 2}
@@ -2052,9 +2052,9 @@ MonoBehaviour:
   targetPosition: {x: 0, y: 0, z: 0}
   targetRotation: {x: 0, y: 0, z: 0, w: 0}
   targetAltitude: 0
-  lidar: {fileID: 0}
-  yolo: {fileID: 0}
-  trackingLogger: {fileID: 0}
+  lidar: {fileID: 686543994}
+  yolo: {fileID: 1537995947}
+  trackingLogger: {fileID: 577522015}
 --- !u!4 &686543992 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
@@ -2822,7 +2822,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!23 &1211360747
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2908,6 +2908,10 @@ PrefabInstance:
     - target: {fileID: 1412742708598286, guid: 347040970b496ba4086308c48e34652b, type: 3}
       propertyPath: m_Name
       value: maggellan_ex (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1412742708598286, guid: 347040970b496ba4086308c48e34652b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4874934499113314, guid: 347040970b496ba4086308c48e34652b, type: 3}
       propertyPath: m_LocalScale.x
@@ -3242,7 +3246,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!23 &1240100926
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3751,7 +3755,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885154, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_TagString
-      value: Drone
+      value: Satellite
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalScale.x
@@ -3977,12 +3981,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   promptInput: {fileID: 1234603007}
-  droneResultText: {fileID: 0}
+  SatelliteResultText: {fileID: 0}
   button: {fileID: 1449411619}
   distanceText: {fileID: 519793942}
-  droneResultContent: {fileID: 412048934}
-  droneResultTextPrefab: {fileID: 2603825285901471185, guid: 5f7394e220a6ef9449b97895fe209b8b, type: 3}
-  droneResultScrollRect: {fileID: 1302009046}
+  SatelliteResultContent: {fileID: 412048934}
+  SatelliteResultTextPrefab: {fileID: 2603825285901471185, guid: 5f7394e220a6ef9449b97895fe209b8b, type: 3}
+  SatelliteResultScrollRect: {fileID: 1302009046}
 --- !u!4 &1491681309
 Transform:
   m_ObjectHideFlags: 0
@@ -4012,7 +4016,7 @@ GameObject:
   - component: {fileID: 1537995944}
   - component: {fileID: 1537995947}
   m_Layer: 0
-  m_Name: DroneCamera
+  m_Name: SatelliteCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4148,15 +4152,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 660b4d56148bfed4f87891964ebf7f8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelAsset: {fileID: 5022602860645237092, guid: 81d273dca23a8ed47b2b337d108db279, type: 3}
+  modelAsset: {fileID: 5022602860645237092, guid: 76c58254b4c989a4a9e65691244fc212, type: 3}
   classesAsset: {fileID: 4900000, guid: 93cd4ef44bbe9284ca93ddcc1b72e57d, type: 3}
   displayImage: {fileID: 4477801}
   borderTexture: {fileID: 2800000, guid: 2cebcf9614bd4e2429d105e5253e460d, type: 3}
   font: {fileID: 12800000, guid: 7216b8417a13bd54c98e7646a69144c7, type: 3}
   videoFilename: giraffes.mp4
   labels: []
-  iouThreshold: 0.5
-  scoreThreshold: 0.5
+  iouThreshold: 0.465
+  scoreThreshold: 0.478
 --- !u!1 &1583597245 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8034488783091308936, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
@@ -4613,31 +4617,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 0.58009547
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.23
+      value: 8.83
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 26.464832
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.1144521
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.9934288
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -4645,7 +4649,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 166.856
       objectReference: {fileID: 0}
     - target: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -4715,7 +4719,7 @@ GameObject:
   - component: {fileID: 1821879694}
   - component: {fileID: 1821879693}
   m_Layer: 5
-  m_Name: Drone Reconnaissance Result
+  m_Name: Satellite Reconnaissance Result
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5344,7 +5348,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1577956543075430
 GameObject:
   m_ObjectHideFlags: 0

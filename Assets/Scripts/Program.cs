@@ -13,7 +13,7 @@ public class Program : MonoBehaviour
 {
     public static Program instance;
 
-    static DroneCommandData currentDroneState = new DroneCommandData
+    static SatelliteCommandData currentSatelliteState = new SatelliteCommandData
     {
         Action = "hover",
         Altitude = 0.0f,
@@ -29,8 +29,8 @@ public class Program : MonoBehaviour
     public void LLMProcess(string promptInput)
     {
         // 새 명령을 처리하기 전에 상태 확인
-        Debug.Log("새 명령 처리 전 - 현재 드론 상태:");
-        PrintDroneState();
+        Debug.Log("새 명령 처리 전 - 현재 위성 상태:");
+        PrintSatelliteState();
         
         StartCoroutine(ProcessCommands(promptInput));
     }
@@ -38,13 +38,13 @@ public class Program : MonoBehaviour
     // 명령 처리를 위한 코루틴
     private System.Collections.IEnumerator ProcessCommands(string promptInput)
     {
-        Debug.Log("UAV 명령 테스트 애플리케이션");
+        Debug.Log("Satellite 명령 테스트 애플리케이션");
         Debug.Log("=============================================");
         Debug.Log("입력된 명령을 처리합니다.");
 
         // 초기 상태 출력
-        Debug.Log("\n=== 초기 드론 상태 ===");
-        PrintDroneState();
+        Debug.Log("\n=== 초기 위성 상태 ===");
+        PrintSatelliteState();
         
         string apiUrl = "http://localhost:11434/api/chat";
         string modelName = "llama3:8b";
@@ -53,11 +53,11 @@ public class Program : MonoBehaviour
         
         // 시스템 프롬프트 설정
         string systemPrompt = @"
-You are an LLM that converts drone commands into structured JSON.
+You are an LLM that converts Satellite commands into structured JSON.
 
-The drone has a current state, and your output should only change the parameters mentioned in the command.
+The Satellite has a current state, and your output should only change the parameters mentioned in the command.
 
-Input: User inputs a natural language drone command.
+Input: User inputs a natural language Satellite command.
 Output: Convert to JSON with the following structure:
 {
   ""action"": ""[action type: move, hover, altitude, rotate, return, reconnaissance, tracking]"",
@@ -102,27 +102,27 @@ Analyze the input command and return only the JSON object. Do not include any ex
         Debug.Log($"\n처리 중인 명령: {promptInput}");
 
         // Ollama API를 통한 명령 처리시 현재 상태 정보도 함께 전달
-        string currentStateJson = JsonConvert.SerializeObject(currentDroneState);
-        string fullUserInput = $"현재 드론 상태: {currentStateJson}\n\n사용자 명령: {promptInput}";
+        string currentStateJson = JsonConvert.SerializeObject(currentSatelliteState);
+        string fullUserInput = $"현재 위성 상태: {currentStateJson}\n\n사용자 명령: {promptInput}";
         
         // 코루틴으로 API 요청 처리
         yield return StartCoroutine(ProcessWithOllamaCoroutine(apiUrl, modelName, systemPrompt, fullUserInput, (jsonResult) => {
-            Debug.Log("\n=== 드론 명령 JSON ===");
+            Debug.Log("\n=== 위성 명령 JSON ===");
             Debug.Log(jsonResult);
             
-            // JSON 결과를 드론 상태에 적용
+            // JSON 결과를 위성 상태에 적용
             try {
                 JObject responseObj = JObject.Parse(jsonResult);
                 string contentJson = responseObj["message"]["content"].ToString();
-                DroneCommandData newCommand = JsonConvert.DeserializeObject<DroneCommandData>(contentJson);
+                SatelliteCommandData newCommand = JsonConvert.DeserializeObject<SatelliteCommandData>(contentJson);
                 if (newCommand != null) {
-                    UpdateDroneState(newCommand);
+                    UpdateSatelliteState(newCommand);
                 }
             }
             catch (Exception ex) {
                 Debug.Log($"JSON 파싱 오류: {ex.Message}");
                 Debug.Log("규칙 기반 파서로 대체합니다...");
-                UpdateDroneState(RuleBasedParser(promptInput));
+                UpdateSatelliteState(RuleBasedParser(promptInput));
             }
         }));
 
@@ -138,7 +138,7 @@ Analyze the input command and return only the JSON object. Do not include any ex
         try
         {
             // JSON 문자열 생성
-            string jsonResult = JsonConvert.SerializeObject(currentDroneState, Formatting.Indented);
+            string jsonResult = JsonConvert.SerializeObject(currentSatelliteState, Formatting.Indented);
             
             // 파일 경로 설정
             string filePath = Path.Combine(Application.dataPath, "Resources", "command.json");
@@ -148,20 +148,20 @@ Analyze the input command and return only the JSON object. Do not include any ex
             
             Debug.Log($"JSON 결과가 성공적으로 저장되었습니다: {filePath}");
 
-            // 중요! 현재 명령 데이터를 바로 DroneCommand 객체로 변환하여 전달
-            DroneCommand command = new DroneCommand();
-            command.Action = currentDroneState.Action;
-            command.Altitude = currentDroneState.Altitude;
-            command.Direction = currentDroneState.Direction;
-            command.Speed = currentDroneState.Speed;
-            command.TrackingDistance = currentDroneState.TrackingDistance;
+            // 중요! 현재 명령 데이터를 바로 SatelliteCommand 객체로 변환하여 전달
+            SatelliteCommand command = new SatelliteCommand();
+            command.Action = currentSatelliteState.Action;
+            command.Altitude = currentSatelliteState.Altitude;
+            command.Direction = currentSatelliteState.Direction;
+            command.Speed = currentSatelliteState.Speed;
+            command.TrackingDistance = currentSatelliteState.TrackingDistance;
             
             // 추적 거리 값도 전달 (여기를 추가)
-            if (currentDroneState.Action == "tracking" && currentDroneState.TrackingDistance != 0)
+            if (currentSatelliteState.Action == "tracking" && currentSatelliteState.TrackingDistance != 0)
             {
                 // Direction 벡터의 크기로 추적 거리를 표현
                 // 추적 거리가 양수면 기존 방향에 거리 적용, 음수면 반대 방향으로 설정
-                float distance = Mathf.Abs(currentDroneState.TrackingDistance);
+                float distance = Mathf.Abs(currentSatelliteState.TrackingDistance);
                 Vector3 dir = new Vector3(0, 0, 1); // 기본 전방 방향
                 
                 if (command.Direction != null && command.Direction.Length == 3)
@@ -191,42 +191,42 @@ Analyze the input command and return only the JSON object. Do not include any ex
             switch (command.Action.ToLower())
             {
                 case "move":
-                    command.actionEnum = DroneCommand.DroneAction.Move;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Move;
                     break;
                 case "hover":
-                    command.actionEnum = DroneCommand.DroneAction.Hover;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Hover;
                     command.Speed = 0;
                     break;
                 case "altitude":
-                    command.actionEnum = DroneCommand.DroneAction.Altitude;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Altitude;
                     break;
                 case "rotate":
-                    command.actionEnum = DroneCommand.DroneAction.Rotate;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Rotate;
                     break;
                 case "return":
-                    command.actionEnum = DroneCommand.DroneAction.Return;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Return;
                     break;
                 case "reconnaissance":
-                    command.actionEnum = DroneCommand.DroneAction.Reconnaissance;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Reconnaissance;
                     break;
                 case "tracking":
-                    command.actionEnum = DroneCommand.DroneAction.Tracking;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Tracking;
                     break;
                 default:
                     Debug.LogWarning($"알 수 없는 액션: {command.Action}. 기본값 Move로 설정합니다.");
-                    command.actionEnum = DroneCommand.DroneAction.Move;
+                    command.actionEnum = SatelliteCommand.SatelliteAction.Move;
                     break;
             }
             
             // 명령을 직접 전달
-            if (DroneCommandHandler.instance != null)
+            if (SatelliteCommandHandler.instance != null)
             {
-                DroneCommandHandler.instance.AddCommand(command);
+                SatelliteCommandHandler.instance.AddCommand(command);
                 Debug.Log("현재 명령이 직접 전달되었습니다!");
             }
             else
             {
-                Debug.LogError("DroneCommandHandler.instance가 null입니다!");
+                Debug.LogError("SatelliteCommandHandler.instance가 null입니다!");
             }
         }
         catch (Exception ex)
@@ -240,28 +240,28 @@ Analyze the input command and return only the JSON object. Do not include any ex
         
         yield return new WaitForSeconds(1.0f);
         
-        if (DroneCommandHandler.instance != null)
+        if (SatelliteCommandHandler.instance != null)
         {
             Debug.Log("지연 후 명령 실행");
-            DroneCommandHandler.instance.ConvertCommandFromJson();
+            SatelliteCommandHandler.instance.ConvertCommandFromJson();
         }
         else
         {
-            Debug.LogError("DroneCommandHandler.instance가 null입니다.");
+            Debug.LogError("SatelliteCommandHandler.instance가 null입니다.");
         }
     }
 
-    // 드론 상태를 업데이트하는 메서드
-    static void UpdateDroneState(DroneCommandData newCommand)
+    // 위성 상태를 업데이트하는 메서드
+    static void UpdateSatelliteState(SatelliteCommandData newCommand)
     {
         bool stateChanged = false;
         
         // 액션이 지정된 경우에만 변경
         if (newCommand.Action != null && newCommand.Action != "")
         {
-            if (currentDroneState.Action != newCommand.Action)
+            if (currentSatelliteState.Action != newCommand.Action)
             {
-                currentDroneState.Action = newCommand.Action;
+                currentSatelliteState.Action = newCommand.Action;
                 stateChanged = true;
             }
         }
@@ -269,32 +269,32 @@ Analyze the input command and return only the JSON object. Do not include any ex
         // 고도 변경이 있는 경우
         if (newCommand.Action == "altitude")
         {
-            float oldAltitude = currentDroneState.Altitude;
+            float oldAltitude = currentSatelliteState.Altitude;
             
             // 방향에 따라 상대적 고도 변경 또는 절대 고도 설정
             if (newCommand.Direction != null && newCommand.Direction.Length == 3)
             {
                 if (newCommand.Direction[1] > 0) // 상승
                 {
-                    currentDroneState.Altitude += newCommand.Altitude;
+                    currentSatelliteState.Altitude += newCommand.Altitude;
                 }
                 else if (newCommand.Direction[1] < 0) // 하강
                 {
-                    currentDroneState.Altitude -= newCommand.Altitude;
-                    if (currentDroneState.Altitude < 0)
-                        currentDroneState.Altitude = 0; // 고도는 0 미만이 될 수 없음
+                    currentSatelliteState.Altitude -= newCommand.Altitude;
+                    if (currentSatelliteState.Altitude < 0)
+                        currentSatelliteState.Altitude = 0; // 고도는 0 미만이 될 수 없음
                 }
                 else // 절대 고도 설정
                 {
-                    currentDroneState.Altitude = newCommand.Altitude;
+                    currentSatelliteState.Altitude = newCommand.Altitude;
                 }
             }
             else // 방향이 없으면 절대 고도로 설정
             {
-                currentDroneState.Altitude = newCommand.Altitude;
+                currentSatelliteState.Altitude = newCommand.Altitude;
             }
             
-            if (oldAltitude != currentDroneState.Altitude)
+            if (oldAltitude != currentSatelliteState.Altitude)
             {
                 stateChanged = true;
             }
@@ -303,30 +303,30 @@ Analyze the input command and return only the JSON object. Do not include any ex
         // 이동 명령이 있는 경우 방향 설정
         if ((newCommand.Action == "move" || newCommand.Action == "reconnaissance") && newCommand.Direction != null && newCommand.Direction.Length == 3)
         {
-            if (!currentDroneState.Direction.SequenceEqual(newCommand.Direction))
+            if (!currentSatelliteState.Direction.SequenceEqual(newCommand.Direction))
             {
-                currentDroneState.Direction = newCommand.Direction.ToArray();
+                currentSatelliteState.Direction = newCommand.Direction.ToArray();
                 stateChanged = true;
             }
         }
         
         // 속도 변경이 있는 경우
-        if (newCommand.Speed > 0 && currentDroneState.Speed != newCommand.Speed)
+        if (newCommand.Speed > 0 && currentSatelliteState.Speed != newCommand.Speed)
         {
-            currentDroneState.Speed = newCommand.Speed;
+            currentSatelliteState.Speed = newCommand.Speed;
             stateChanged = true;
         }
         
         // 상태 변경이 있을 때만 출력
         if (stateChanged)
         {
-            Debug.Log("\n=== 드론 상태 업데이트됨 ===");
-            PrintDroneState();
+            Debug.Log("\n=== 위성 상태 업데이트됨 ===");
+            PrintSatelliteState();
         }
         
         if (newCommand.Action == "tracking" && newCommand.TrackingDistance != 0)
             {
-                currentDroneState.TrackingDistance = newCommand.TrackingDistance;
+                currentSatelliteState.TrackingDistance = newCommand.TrackingDistance;
                 stateChanged = true;
                 
                 if (newCommand.TrackingDistance > 0)
@@ -342,13 +342,13 @@ Analyze the input command and return only the JSON object. Do not include any ex
 
     }
     
-    // 현재 드론 상태를 출력하는 메서드
-    static void PrintDroneState()
+    // 현재 위성 상태를 출력하는 메서드
+    static void PrintSatelliteState()
     {
-        Debug.Log($"액션: {currentDroneState.Action}");
-        Debug.Log($"고도: {currentDroneState.Altitude}m");
-        Debug.Log($"방향: [{string.Join(", ", currentDroneState.Direction)}]");
-        Debug.Log($"속도: {currentDroneState.Speed}m/s");
+        Debug.Log($"액션: {currentSatelliteState.Action}");
+        Debug.Log($"고도: {currentSatelliteState.Altitude}m");
+        Debug.Log($"방향: [{string.Join(", ", currentSatelliteState.Direction)}]");
+        Debug.Log($"속도: {currentSatelliteState.Speed}m/s");
     }
 
     // UnityWebRequest를 사용하는 코루틴
@@ -480,9 +480,9 @@ Analyze the input command and return only the JSON object. Do not include any ex
         }
     }
 
-    static DroneCommandData RuleBasedParser(string command)
+    static SatelliteCommandData RuleBasedParser(string command)
     {
-        var result = new DroneCommandData
+        var result = new SatelliteCommandData
         {
             Action = "",
             Altitude = 0.0f,
@@ -561,7 +561,7 @@ Analyze the input command and return only the JSON object. Do not include any ex
             float speed = float.Parse(speedDown.Groups[2].Value);
             result.Speed = speed;
         }
-        else if ((result.Action == "move" || result.Action == "reconnaissance") && currentDroneState.Speed <= 0)
+        else if ((result.Action == "move" || result.Action == "reconnaissance") && currentSatelliteState.Speed <= 0)
         {
             // 이동 명령시 현재 속도가 0이면 기본 속도 설정
             result.Speed = 5.0f;
@@ -621,7 +621,7 @@ Analyze the input command and return only the JSON object. Do not include any ex
 }
 
 [System.Serializable]
-public class DroneCommandData
+public class SatelliteCommandData
 {
     public string Action { get; set; } = "hover";
     public float Altitude { get; set; }
