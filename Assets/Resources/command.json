@@ -1,11 +1,11 @@
 {
-  "Action": "altitude",
-  "Altitude": 9.0,
+  "Action": "reconnaissance",
+  "Altitude": 0.0,
   "Direction": [
     0.0,
     0.0,
     0.0
   ],
-  "Speed": 3.0,
-  "TrackingDistance": 20.0
+  "Speed": 0.0,
+  "TrackingDistance": 0.0
 }
