@@ -111,106 +111,106 @@ public class AutomaticSatelliteTrackingLogger : MonoBehaviour
     }
     
     /// <summary>
-    /// 현재 위성 추적 데이터 수집
+    /// Collect current satellite tracking data
     /// </summary>
     private void CollectTrackingData()
     {
-        // 위성 컨트롤러 참조 얻기
+        // Get reference to SatelliteController
         SatelliteController SatelliteController = FindObjectOfType<SatelliteController>();
         if (SatelliteController == null || SatelliteController.trackingTarget == null) return;
         
         Transform target = SatelliteController.trackingTarget;
         
-        // 위성과 타겟 사이의 거리와 방향 계산
+        // Calculate distance and direction between satellite and target
         Vector3 SatellitePos = SatelliteController.transform.position;
         Vector3 targetPos = target.position;
         Vector3 directionToTarget = targetPos - SatellitePos;
         float distance = directionToTarget.magnitude;
         
-        // 상대적 방향 (위성 기준)
+        // Relative direction (from satellite's perspective)
         Vector3 localDirection = SatelliteController.transform.InverseTransformDirection(directionToTarget);
         
-        // 움직임 패턴 분석
+        // Analyze movement pattern
         string movementPattern = DetermineMovementPattern(localDirection);
         
-        // 로그 메시지 생성
-        string logMessage = $"[거리: {distance:F1}m] 대상이 위성 기준 {movementPattern} " +
+        // Create log message
+        string logMessage = $"[Distance: {distance:F1}m] Target is {movementPattern} relative to the satellite " +
                           $"(X: {localDirection.x:F1}, Y: {localDirection.y:F1}, Z: {localDirection.z:F1})";
         
-        // 위성 속도 관련 정보
+        // Satellite speed info
         if (SatelliteController.GetComponent<Rigidbody>() != null)
         {
             float speed = SatelliteController.GetComponent<Rigidbody>().linearVelocity.magnitude;
-            logMessage += $", 위성 속도: {speed:F1}m/s";
+            logMessage += $", Satellite speed: {speed:F1}m/s";
         }
         
-        // 로그 기록
+        // Log
         LogTrackingInfo(logMessage);
     }
     
     /// <summary>
-    /// 방향 데이터를 기반으로 움직임 패턴 결정
+    /// Determine movement pattern based on direction data
     /// </summary>
     private string DetermineMovementPattern(Vector3 localDir)
     {
         StringBuilder pattern = new StringBuilder();
         
-        // 좌우 움직임
+        // Left/right movement
         if (Mathf.Abs(localDir.x) > 1.0f)
         {
-            pattern.Append(localDir.x > 0 ? "오른쪽" : "왼쪽");
+            pattern.Append(localDir.x > 0 ? "moving right" : "moving left");
         }
         
-        // 상하 움직임
+        // Up/down movement
         if (Mathf.Abs(localDir.y) > 1.0f)
         {
-            if (pattern.Length > 0) pattern.Append(" 및 ");
-            pattern.Append(localDir.y > 0 ? "위쪽" : "아래쪽");
+            if (pattern.Length > 0) pattern.Append(" and ");
+            pattern.Append(localDir.y > 0 ? "moving up" : "moving down");
         }
         
-        // 전후 움직임
+        // Forward/backward movement
         if (Mathf.Abs(localDir.z) > 1.0f)
         {
-            if (pattern.Length > 0) pattern.Append("으로 ");
-            pattern.Append(localDir.z > 0 ? "접근 중" : "멀어지는 중");
+            if (pattern.Length > 0) pattern.Append(", ");
+            pattern.Append(localDir.z > 0 ? "approaching" : "moving away");
         }
         
-        // 움직임이 미미한 경우
+        // If movement is minimal
         if (pattern.Length == 0)
         {
-            pattern.Append("제자리에 정지해 있음");
+            pattern.Append("stationary");
         }
         
         return pattern.ToString();
     }
     
     /// <summary>
-    /// 위성 추적 상태를 로그 파일에 기록
+    /// Record satellite tracking status to log file
     /// </summary>
     public void LogTrackingInfo(string logMessage)
     {
         try
         {
-            // 타임스탬프와 함께 로그 추가
+            // Add log with timestamp
             string timestampedLog = $"[{DateTime.Now.ToString("HH:mm:ss")}] {logMessage}";
             File.AppendAllText(logFilePath, timestampedLog + "\n");
             
-            // 큐에 로그 추가
+            // Add to queue
             recentLogs.Enqueue(timestampedLog);
             if (recentLogs.Count > maxRecentLogs)
             {
-                recentLogs.Dequeue(); // 가장 오래된 로그 제거
+                recentLogs.Dequeue(); // Remove oldest log
             }
             
-            // UI에 최신 로그 표시 (선택적)
+            // Show latest log on UI (optional)
             if (uiManager != null)
                 uiManager.SetSatelliteResultText(timestampedLog);
             
-            Debug.Log($"[트래킹 로그] {logMessage}");
+            Debug.Log($"[Tracking Log] {logMessage}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"로그 기록 오류: {e.Message}");
+            Debug.LogError($"Log write error: {e.Message}");
         }
     }
     
@@ -258,19 +258,19 @@ public class AutomaticSatelliteTrackingLogger : MonoBehaviour
     /// </summary>
     private IEnumerator ProcessSummaryRequest(string logContent)
     {
-        Debug.LogFormat("로그 요약 요청 시작... {0}개의 로그 수집됨", recentLogs.Count);
-        LogTrackingInfo("---로그 요약 요청 중---");
+        Debug.LogFormat("Starting log summary request... {0} logs collected", recentLogs.Count);
+        LogTrackingInfo("---Requesting log summary---");
         
-        // 요약용 시스템 프롬프트
+        // System prompt for summary
         string systemPrompt = @"
-다음 위성 추적 시스템 로그를 분석하여 감지된 위성의 움직임 패턴을 3-4문장으로 간결하게 요약해주세요:
+Analyze the following satellite tracking system logs and concisely summarize the detected satellite movement patterns in 3-4 sentences:
 
-1. 주요 움직임 패턴(좌우 이동, 상하 이동, 접근, 후퇴 등)을 식별하세요
-2. 위성의 이동 빈도나 궤도 규칙성을 분석하세요
-3. 비정상적인 위성 움직임(급격한 방향 전환, 일관된 패턴, 예측 불가능한 움직임 등)을 강조하세요
-4. 위성의 전반적인 이동 경로와 의도를 추론해보세요
+1. Identify major movement patterns (left/right, up/down, approaching, moving away, etc.)
+2. Analyze the frequency and regularity of satellite movements or orbits
+3. Highlight any abnormal satellite behavior (sudden direction changes, consistent patterns, unpredictable movements, etc.)
+4. Infer the overall movement path and intent of the satellite
 
-요약은 간결하면서도 정보가 풍부해야 하며, 위성 추적 운영자가 위성의 행동 패턴을 신속하게 이해할 수 있도록 작성해주세요.
+The summary should be concise yet informative, enabling a satellite tracking operator to quickly understand the satellite's behavior patterns.
 ";
         
         // Ollama API 요청 형식 구성
@@ -349,25 +349,25 @@ public class AutomaticSatelliteTrackingLogger : MonoBehaviour
     }
     
     /// <summary>
-    /// 저장된 로그 파일 삭제 (초기화)
+    /// Delete saved log file (initialize)
     /// </summary>
     public void ClearLogFile()
     {
         try
         {
-            File.WriteAllText(logFilePath, "위성 추적 로그 초기화: " + DateTime.Now.ToString() + "\n");
+            File.WriteAllText(logFilePath, "Satellite tracking log initialized: " + DateTime.Now.ToString() + "\n");
             recentLogs.Clear();
             
             if (uiManager != null)
             {
-                uiManager.SetSatelliteResultText("로그가 초기화되었습니다.");
+                uiManager.SetSatelliteResultText("Log has been initialized.");
             }
             
-            Debug.Log("로그 파일이 초기화되었습니다.");
+            Debug.Log("Log file has been initialized.");
         }
         catch (Exception e)
         {
-            Debug.LogError($"로그 파일 초기화 오류: {e.Message}");
+            Debug.LogError($"Log file initialization error: {e.Message}");
         }
     }
 }
