@@ -370,7 +370,7 @@ public class RunYOLO : MonoBehaviour
                 lastSatelliteDetectionTime = Time.time;
 
                 // 위성 감지시 UI 업데이트 (매번 업데이트하여 실시간 정보 제공)
-                UpdateSatelliteStatusUI(SatelliteId);
+                // UpdateSatelliteStatusUI(SatelliteId);
                 Debug.Log("위성 감지! 움직임: " + latestDetectedSatellite.movementPattern);
 
                 if (isNewSatellite)

@@ -326,7 +326,7 @@ The summary should be concise yet informative, enabling a satellite tracking ope
                 string summary = response.Message.Content;
                 
                 // 요약 내용 로그에 추가
-                string logEntry = "=== 추적 요약 ===\n" + summary + "\n=================";
+                string logEntry = "=== Tracking Summary ===\n" + summary + "\n=================";
                 LogTrackingInfo(logEntry);
                 
                 // UI 업데이트
