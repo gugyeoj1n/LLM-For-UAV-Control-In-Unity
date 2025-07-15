@@ -28,15 +28,18 @@ public class Program : MonoBehaviour
 
     public void LLMProcess(string promptInput)
     {
-        // 새 명령을 처리하기 전에 상태 확인
+        string logPath = Path.Combine(Application.persistentDataPath, "LLMWorkflowLog.txt");
+        string nowStr = DateTime.Now.ToString("HH:mm:ss.fff");
+        Debug.Log($"[TIME] LLM 명령 전송 시작: {nowStr}");
+        File.AppendAllText(logPath, $"[TIME] LLM 명령 전송 시작: {nowStr}\n");
         Debug.Log("새 명령 처리 전 - 현재 위성 상태:");
         PrintSatelliteState();
         
-        StartCoroutine(ProcessCommands(promptInput));
+        StartCoroutine(ProcessCommands(promptInput, logPath));
     }
     
     // 명령 처리를 위한 코루틴
-    private System.Collections.IEnumerator ProcessCommands(string promptInput)
+    private System.Collections.IEnumerator ProcessCommands(string promptInput, string logPath)
     {
         Debug.Log("Satellite 명령 테스트 애플리케이션");
         Debug.Log("=============================================");
@@ -125,8 +128,9 @@ Analyze the input command and return only the JSON object. Do not include any ex
                 UpdateSatelliteState(RuleBasedParser(promptInput));
             }
         }));
-
-        Debug.Log("\n명령 처리가 완료되었습니다.");
+        string nowStr2 = DateTime.Now.ToString("HH:mm:ss.fff");
+        Debug.Log($"[TIME] LLM 응답 받아 JSON 저장: {nowStr2}");
+        File.AppendAllText(logPath, $"[TIME] LLM 응답 받아 JSON 저장: {nowStr2}\n");
         
         // 최종 JSON 결과를 파일로 저장
         SaveJsonToFile();

@@ -226,6 +226,11 @@ public class AutomaticSatelliteTrackingLogger : MonoBehaviour
             return;
         }
 
+        string logPath = Path.Combine(Application.persistentDataPath, "LLMWorkflowLog.txt");
+        string nowStr = DateTime.Now.ToString("HH:mm:ss.fff");
+        Debug.Log($"[TIME] LLM 요약 요청 시작: {nowStr}");
+        File.AppendAllText(logPath, $"[TIME] LLM 요약 요청 시작: {nowStr}\n");
+
         try
         {
             // 로그 파일 읽기
@@ -308,6 +313,11 @@ The summary should be concise yet informative, enabling a satellite tracking ope
                 yield return null;
             }
             
+            string logPath = Path.Combine(Application.persistentDataPath, "LLMWorkflowLog.txt");
+            string nowStr = DateTime.Now.ToString("HH:mm:ss.fff");
+            Debug.Log($"[TIME] LLM 요약 응답 수신: {nowStr}");
+            File.AppendAllText(logPath, $"[TIME] LLM 요약 응답 수신: {nowStr}\n");
+
             if (request.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"요약 API 요청 실패: {request.error}");
@@ -335,6 +345,9 @@ The summary should be concise yet informative, enabling a satellite tracking ope
                         uiManager.SetSatelliteResultText(line);
                 
                 Debug.Log($"요약 완료: {summary}");
+                string nowStr2 = DateTime.Now.ToString("HH:mm:ss.fff");
+                Debug.Log($"[TIME] LLM 요약 처리 완료: {nowStr2}");
+                File.AppendAllText(logPath, $"[TIME] LLM 요약 처리 완료: {nowStr2}\n");
             }
             catch (Exception e)
             {
@@ -369,6 +382,34 @@ The summary should be concise yet informative, enabling a satellite tracking ope
         {
             Debug.LogError($"Log file initialization error: {e.Message}");
         }
+    }
+
+    public class ProcessTimingInfo
+    {
+        public DateTime CommandInputStart, CommandInputEnd;
+        public DateTime LLMStart, LLMEnd;
+        public DateTime ControlStart, ControlEnd;
+        public DateTime VisionStart, VisionEnd;
+        public DateTime LogStart, LogEnd;
+
+        public void PrintAllTimings()
+        {
+            Debug.Log($"[TIME] 1. 명령 입력: {CommandInputStart:HH:mm:ss.fff} ~ {CommandInputEnd:HH:mm:ss.fff} ({(CommandInputEnd-CommandInputStart).TotalSeconds:F3}초)");
+            Debug.Log($"[TIME] 2. LLM 변환: {LLMStart:HH:mm:ss.fff} ~ {LLMEnd:HH:mm:ss.fff} ({(LLMEnd-LLMStart).TotalSeconds:F3}초)");
+            Debug.Log($"[TIME] 3. 위성 제어: {ControlStart:HH:mm:ss.fff} ~ {ControlEnd:HH:mm:ss.fff} ({(ControlEnd-ControlStart).TotalSeconds:F3}초)");
+            Debug.Log($"[TIME] 4. 비전 분석: {VisionStart:HH:mm:ss.fff} ~ {VisionEnd:HH:mm:ss.fff} ({(VisionEnd-VisionStart).TotalSeconds:F3}초)");
+            Debug.Log($"[TIME] 5. 로그/요약: {LogStart:HH:mm:ss.fff} ~ {LogEnd:HH:mm:ss.fff} ({(LogEnd-LogStart).TotalSeconds:F3}초)");
+            Debug.Log($"[TIME] 전체 소요 시간: {(LogEnd-CommandInputStart).TotalSeconds:F3}초");
+        }
+    }
+
+    // 로그/요약 단계에서 전체 타이밍을 출력하는 메서드 추가
+    public void LogSummaryWithTiming(ProcessTimingInfo timingInfo)
+    {
+        timingInfo.LogStart = DateTime.Now;
+        // ... 로그/요약 처리 ...
+        timingInfo.LogEnd = DateTime.Now;
+        timingInfo.PrintAllTimings(); // 전체 시간 및 각 파트별 시간 출력
     }
 }
 

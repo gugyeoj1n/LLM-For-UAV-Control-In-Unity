@@ -184,10 +184,10 @@ public class SatelliteCommandHandler : MonoBehaviour
     // SatelliteCommandHandler.cs에 다음 메서드 추가
     public void AddCommand(SatelliteCommand command)
     {
+        // timingInfo 관련 코드 삭제
         // 큐에 명령 추가
         commandQueue.Enqueue(command);
         Debug.Log($"명령이 직접 추가됨: {command.actionEnum}. 현재 큐 크기: {commandQueue.Count}");
-        
         // 처리 중이 아니면 처리 시작
         if (!isProcessingCommand)
         {

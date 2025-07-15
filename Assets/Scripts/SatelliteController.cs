@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.IO;
+using System;
 
 [RequireComponent(typeof(Rigidbody))]
 public class SatelliteController : MonoBehaviour
@@ -303,6 +305,10 @@ public class SatelliteController : MonoBehaviour
 
     public void OnCommand(SatelliteCommand command)
     {
+        string logPath = Path.Combine(Application.persistentDataPath, "LLMWorkflowLog.txt");
+        string nowStr = DateTime.Now.ToString("HH:mm:ss.fff");
+        Debug.Log($"[TIME] 위성 제어 시작: {nowStr}");
+        File.AppendAllText(logPath, $"[TIME] 위성 제어 시작: {nowStr}\n");
         Debug.Log($"[SatelliteController] 명령 수신: {command.actionEnum}, 속도: {command.Speed}, 방향: {command.DirectionVector}");
         switch (command.actionEnum)
         {
@@ -368,5 +374,8 @@ public class SatelliteController : MonoBehaviour
                 Debug.LogWarning($"알 수 없는 명령: {command.actionEnum}");
                 break;
         }
+        string nowStr2 = DateTime.Now.ToString("HH:mm:ss.fff");
+        Debug.Log($"[TIME] 위성 제어 완료: {nowStr2}");
+        File.AppendAllText(logPath, $"[TIME] 위성 제어 완료: {nowStr2}\n");
     }
 }

@@ -297,6 +297,10 @@ public class RunYOLO : MonoBehaviour
 
     public void ExecuteML()
     {
+        string logPath = Path.Combine(Application.persistentDataPath, "LLMWorkflowLog.txt");
+        string nowStr = DateTime.Now.ToString("HH:mm:ss.fff");
+        Debug.Log($"[TIME] YOLO 분석 시작: {nowStr}");
+        File.AppendAllText(logPath, $"[TIME] YOLO 분석 시작: {nowStr}\n");
         displayImage.texture = targetRT;
 
         using Tensor<float> inputTensor = new Tensor<float>(new TensorShape(1, 3, imageHeight, imageWidth));
@@ -423,6 +427,10 @@ public class RunYOLO : MonoBehaviour
         
         // 디버그: 위성 감지 상태 요약
         Debug.Log($"이번 프레임에서 {detectedSatelliteIds.Count}개의 위성이 감지되었습니다. 총 추적 중인 위성: {SatelliteTrackers.Count}개");
+        // YOLO 분석 완료 시점
+        string nowStr2 = DateTime.Now.ToString("HH:mm:ss.fff");
+        Debug.Log($"[TIME] YOLO 분석 완료: {nowStr2}");
+        File.AppendAllText(logPath, $"[TIME] YOLO 분석 완료: {nowStr2}\n");
     }
     
     // UI에 위성 움직임 정보 업데이트

@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Text;
 using NativeWebSocket;
 using System.Threading.Tasks;
+using System.IO; // Added for Path and File operations
+using System; // Added for DateTime
 
 public class SatelliteVisionAnalyzer : MonoBehaviour
 {
@@ -153,6 +155,10 @@ public class SatelliteVisionAnalyzer : MonoBehaviour
                 // WebSocket으로 전송
                 if (isConnected)
                 {
+                    string logPath = Path.Combine(Application.persistentDataPath, "LLMWorkflowLog.txt");
+                    string nowStr = DateTime.Now.ToString("HH:mm:ss.fff");
+                    Debug.Log($"[TIME] YOLO로 프레임 전송: {nowStr}");
+                    File.AppendAllText(logPath, $"[TIME] YOLO로 프레임 전송: {nowStr}\n");
                     websocket.SendText(base64Image);
                 }
             }
