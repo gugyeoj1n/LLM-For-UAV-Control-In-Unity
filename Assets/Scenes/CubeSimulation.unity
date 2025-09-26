@@ -2390,6 +2390,26 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  timeElapsed: 0
+  lastLaserTime: 0
+  lastTargetSwitchTime: 0
+  isTargetingEarth: 0
+  currentLaserDirection: {x: 0, y: 0, z: 0}
+  gameStartTime: 0
+  hasAutoTargeted: 0
+  isTumbling: 0
+  hasTumbled: 0
+  tumblingStartTime: 0
+  initialRotation: {x: 0, y: 0, z: 0, w: 0}
+  targetRotation: {x: 0, y: 0, z: 0, w: 0}
+  rightDirectionLaser: {x: 1, y: 0, z: 0}
+  isLaserSimulationActive: 0
+  hasLaserSimulationStarted: 0
+  isAngleDrifting: 0
+  simulationStartTimeElapsed: 0
+  angleDriftStartTime: 0
+  originalLaserDirection: {x: 0, y: 0, z: 0}
+  driftedLaserDirection: {x: 0, y: 0, z: 0}
 --- !u!1 &1234410065
 GameObject:
   m_ObjectHideFlags: 0
@@ -2838,6 +2858,26 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  timeElapsed: 0
+  lastLaserTime: 0
+  lastTargetSwitchTime: 0
+  isTargetingEarth: 0
+  currentLaserDirection: {x: 0, y: 0, z: 0}
+  gameStartTime: 0
+  hasAutoTargeted: 0
+  isTumbling: 0
+  hasTumbled: 0
+  tumblingStartTime: 0
+  initialRotation: {x: 0, y: 0, z: 0, w: 0}
+  targetRotation: {x: 0, y: 0, z: 0, w: 0}
+  rightDirectionLaser: {x: 1, y: 0, z: 0}
+  isLaserSimulationActive: 0
+  hasLaserSimulationStarted: 0
+  isAngleDrifting: 0
+  simulationStartTimeElapsed: 0
+  angleDriftStartTime: 0
+  originalLaserDirection: {x: 0, y: 0, z: 0}
+  driftedLaserDirection: {x: 0, y: 0, z: 0}
 --- !u!114 &1240100931
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4289,6 +4329,26 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  timeElapsed: 0
+  lastLaserTime: 0
+  lastTargetSwitchTime: 0
+  isTargetingEarth: 0
+  currentLaserDirection: {x: 0, y: 0, z: 0}
+  gameStartTime: 0
+  hasAutoTargeted: 0
+  isTumbling: 0
+  hasTumbled: 0
+  tumblingStartTime: 0
+  initialRotation: {x: 0, y: 0, z: 0, w: 0}
+  targetRotation: {x: 0, y: 0, z: 0, w: 0}
+  rightDirectionLaser: {x: 1, y: 0, z: 0}
+  isLaserSimulationActive: 0
+  hasLaserSimulationStarted: 0
+  isAngleDrifting: 0
+  simulationStartTimeElapsed: 0
+  angleDriftStartTime: 0
+  originalLaserDirection: {x: 0, y: 0, z: 0}
+  driftedLaserDirection: {x: 0, y: 0, z: 0}
 --- !u!23 &2082959604
 MeshRenderer:
   m_ObjectHideFlags: 0

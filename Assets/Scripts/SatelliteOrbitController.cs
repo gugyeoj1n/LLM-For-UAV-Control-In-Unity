@@ -19,8 +19,8 @@ public class SatelliteOrbitController : MonoBehaviour
     public bool useCustomAsOrbitCenter = true; // 커스텀 위치를 궤도 중심으로 사용
     
     [Header("궤도 정보 (읽기 전용)")]
-    [SerializeField] private float currentAngle; // 현재 각도
-    [SerializeField] private Vector3 currentOrbitPosition; // 현재 궤도상 위치
+    [SerializeField] public float currentAngle; // 현재 각도
+    [SerializeField] public Vector3 currentOrbitPosition; // 현재 궤도상 위치
     
     [Header("레이저 시스템")]
     public bool enableLaser = true; // 레이저 활성화
@@ -59,30 +59,30 @@ public class SatelliteOrbitController : MonoBehaviour
     public bool stopLaserAtCollision = true; // 충돌 시 레이저 중단
     public AnimationCurve angleDriftCurve = AnimationCurve.EaseInOut(0, 0, 1, 1); // 각도 틀어짐 곡선
     
-    private float timeElapsed = 0f;
-    private float lastLaserTime = 0f;
-    private float lastTargetSwitchTime = 0f;
-    private bool isTargetingEarth = false;
-    private Vector3 currentLaserDirection;
-    private float gameStartTime = 0f; // 게임 시작 시간
-    private bool hasAutoTargeted = false; // 자동 타겟팅이 실행되었는지 여부
+    public float timeElapsed = 0f;
+    public float lastLaserTime = 0f;
+    public float lastTargetSwitchTime = 0f;
+    public bool isTargetingEarth = false;
+    public Vector3 currentLaserDirection;
+    public float gameStartTime = 0f; // 게임 시작 시간
+    public bool hasAutoTargeted = false; // 자동 타겟팅이 실행되었는지 여부
     
     // 텀블링 시스템 변수들
-    private bool isTumbling = false; // 현재 텀블링 중인지
-    private bool hasTumbled = false; // 텀블링이 완료되었는지
-    private float tumblingStartTime = 0f; // 텀블링 시작 시간
-    private Quaternion initialRotation; // 초기 회전값
-    private Quaternion targetRotation; // 목표 회전값 (180도 회전 후)
-    private Vector3 rightDirectionLaser = Vector3.right; // 오른쪽 방향 레이저
+    public bool isTumbling = false; // 현재 텀블링 중인지
+    public bool hasTumbled = false; // 텀블링이 완료되었는지
+    public float tumblingStartTime = 0f; // 텀블링 시작 시간
+    public Quaternion initialRotation; // 초기 회전값
+    public Quaternion targetRotation; // 목표 회전값 (180도 회전 후)
+    public Vector3 rightDirectionLaser = Vector3.right; // 오른쪽 방향 레이저
     
     // 레이저 시뮬레이션 변수들
-    private bool isLaserSimulationActive = false; // 레이저 시뮬레이션 활성화 상태
-    private bool hasLaserSimulationStarted = false; // 시뮬레이션 시작됨
-    private bool isAngleDrifting = false; // 각도 틀어짐 중
-    private float simulationStartTimeElapsed = 0f; // 시뮬레이션 시작 시간
-    private float angleDriftStartTime = 0f; // 각도 틀어짐 시작 시간
-    private Vector3 originalLaserDirection; // 원래 레이저 방향
-    private Vector3 driftedLaserDirection; // 틀어진 레이저 방향
+    public bool isLaserSimulationActive = false; // 레이저 시뮬레이션 활성화 상태
+    public bool hasLaserSimulationStarted = false; // 시뮬레이션 시작됨
+    public bool isAngleDrifting = false; // 각도 틀어짐 중
+    public float simulationStartTimeElapsed = 0f; // 시뮬레이션 시작 시간
+    public float angleDriftStartTime = 0f; // 각도 틀어짐 시작 시간
+    public Vector3 originalLaserDirection; // 원래 레이저 방향
+    public Vector3 driftedLaserDirection; // 틀어진 레이저 방향
 
     void Start()
     {
@@ -374,8 +374,8 @@ public class SatelliteOrbitController : MonoBehaviour
             Debug.Log($"{autoTargetDelay}초 경과! 자동으로 지구를 타겟팅합니다.");
         }
         
-        // 기본 타겟이 움직이는 경우 방향 업데이트
-        if (!isTargetingEarth && defaultTarget != null)
+        // 기본 타겟이 움직이는 경우 방향 업데이트 (레이저 시뮬레이션 중이 아닐 때)
+        if (!hasLaserSimulationStarted && !isTargetingEarth && defaultTarget != null)
         {
             currentLaserDirection = (defaultTarget.position - transform.position).normalized;
         }
@@ -827,6 +827,9 @@ public class SatelliteOrbitController : MonoBehaviour
         hasLaserSimulationStarted = true;
         isAngleDrifting = true;
         angleDriftStartTime = Time.time;
+
+        // 현재 레이저 방향을 기준으로 각도 틀어짐을 시작하도록 설정
+        originalLaserDirection = currentLaserDirection;
         
         Debug.Log("레이저 시뮬레이션 시작! 각도 틀어짐 시작");
     }
