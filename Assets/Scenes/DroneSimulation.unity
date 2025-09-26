@@ -2314,7 +2314,7 @@ MonoBehaviour:
   verticalSpeed: 3
   rotationSpeed: 100
   trackingTarget: {fileID: 0}
-  trackingDistance: 20
+  trackingDistance: 30
   trackingSpeedMultiplier: 0.8
   isHovering: 0
   isMoving: 0
@@ -2330,6 +2330,7 @@ MonoBehaviour:
   lidar: {fileID: 686543994}
   yolo: {fileID: 1537995947}
   trackingLogger: {fileID: 577522015}
+  maxRepeatCount: 2
 --- !u!4 &686543992 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}

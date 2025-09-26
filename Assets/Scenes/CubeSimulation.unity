@@ -1876,6 +1876,7 @@ MonoBehaviour:
   lidar: {fileID: 0}
   yolo: {fileID: 0}
   trackingLogger: {fileID: 0}
+  maxRepeatCount: 2
 --- !u!4 &686543992 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2596781637027885155, guid: 9152427a8aeb2e5459de6cc38a8b3308, type: 3}
@@ -2257,7 +2258,7 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
+  m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 3683344635396037008, guid: 674177046d3c33e448665161f21e58b9, type: 3}
@@ -2327,9 +2328,68 @@ MonoBehaviour:
   orbitSpeed: 1
   earthPosition: {x: 0, y: 0, z: 0}
   orbitAxis: {x: 0, y: 1, z: 0}
+  alwaysLookAtEarth: 1
+  lookAtEarthSpeed: 5
   startAngle: 10
+  useCustomStartPosition: 0
+  customStartPosition: {x: 0, y: 0, z: 0}
+  useCustomAsOrbitCenter: 1
   currentAngle: 0
   currentOrbitPosition: {x: 0, y: 0, z: 0}
+  enableLaser: 1
+  laserRange: 100
+  laserDamage: 10
+  laserCooldown: 0
+  laserOrigin: {fileID: 0}
+  laserLineRenderer: {fileID: 0}
+  laserColor: {r: 0.30462468, g: 1, b: 0, a: 1}
+  laserWidth: 0.1
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  showCollisionDebug: 1
+  useAdvancedCollision: 1
+  collisionCheckRadius: 0.5
+  defaultTarget: {fileID: 2082959606}
+  autoTargetEarth: 0
+  earthTargetingRange: 50
+  targetSwitchCooldown: 3
+  autoTargetDelay: 10
+  enableTumbling: 0
+  tumblingTriggerTime: 5
+  tumblingDuration: 3
+  tumblingSpeed: 90
+  useRightDirectionLaser: 1
+  enableLaserSimulation: 1
+  lazerTarget: {fileID: 2082959606}
+  simulationStartTime: 5
+  angleDriftDuration: 10
+  maxAngleDrift: 20
+  stopLaserAtCollision: 1
+  angleDriftCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1234410065
 GameObject:
   m_ObjectHideFlags: 0
@@ -2716,9 +2776,68 @@ MonoBehaviour:
   orbitSpeed: 1
   earthPosition: {x: 0, y: 0, z: 0}
   orbitAxis: {x: 0, y: 1, z: 0}
+  alwaysLookAtEarth: 1
+  lookAtEarthSpeed: 5
   startAngle: 0
+  useCustomStartPosition: 0
+  customStartPosition: {x: 0, y: 0, z: 0}
+  useCustomAsOrbitCenter: 1
   currentAngle: 0
   currentOrbitPosition: {x: 0, y: 0, z: 0}
+  enableLaser: 0
+  laserRange: 100
+  laserDamage: 10
+  laserCooldown: 1
+  laserOrigin: {fileID: 0}
+  laserLineRenderer: {fileID: 0}
+  laserColor: {r: 0, g: 1, b: 0.047459126, a: 1}
+  laserWidth: 0.1
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  showCollisionDebug: 1
+  useAdvancedCollision: 1
+  collisionCheckRadius: 0.5
+  defaultTarget: {fileID: 0}
+  autoTargetEarth: 1
+  earthTargetingRange: 50
+  targetSwitchCooldown: 3
+  autoTargetDelay: 10
+  enableTumbling: 0
+  tumblingTriggerTime: 5
+  tumblingDuration: 3
+  tumblingSpeed: 90
+  useRightDirectionLaser: 1
+  enableLaserSimulation: 0
+  lazerTarget: {fileID: 0}
+  simulationStartTime: 5
+  angleDriftDuration: 5
+  maxAngleDrift: 20
+  stopLaserAtCollision: 1
+  angleDriftCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!114 &1240100931
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2751,6 +2870,7 @@ MonoBehaviour:
   lidar: {fileID: 0}
   yolo: {fileID: 0}
   trackingLogger: {fileID: 0}
+  maxRepeatCount: 2
 --- !u!54 &1240100932
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3324,6 +3444,18 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 426654, guid: 27fe6d2a15a377f4587f716a2d37ca8a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 426654, guid: 27fe6d2a15a377f4587f716a2d37ca8a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 426654, guid: 27fe6d2a15a377f4587f716a2d37ca8a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 426654, guid: 27fe6d2a15a377f4587f716a2d37ca8a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -3379,6 +3511,10 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11491094, guid: 27fe6d2a15a377f4587f716a2d37ca8a, type: 3}
+      propertyPath: speed
+      value: 0.3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3414,12 +3550,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   promptInput: {fileID: 1234603007}
-  droneResultText: {fileID: 0}
+  SatelliteResultText: {fileID: 0}
   button: {fileID: 1449411619}
   distanceText: {fileID: 519793942}
-  droneResultContent: {fileID: 412048934}
-  droneResultTextPrefab: {fileID: 2603825285901471185, guid: 5f7394e220a6ef9449b97895fe209b8b, type: 3}
-  droneResultScrollRect: {fileID: 1302009046}
+  SatelliteResultContent: {fileID: 0}
+  SatelliteResultTextPrefab: {fileID: 0}
+  SatelliteResultScrollRect: {fileID: 0}
 --- !u!4 &1491681309
 Transform:
   m_ObjectHideFlags: 0
@@ -4054,6 +4190,205 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a77269ff27472934987bfde66ff2c4bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &2082959602
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2082959606}
+  - component: {fileID: 2082959605}
+  - component: {fileID: 2082959604}
+  - component: {fileID: 2082959603}
+  - component: {fileID: 2082959607}
+  m_Layer: 0
+  m_Name: Laser
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2082959603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082959602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7afd0636d464cf744874eee155b7f711, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  orbitRadius: 28
+  orbitSpeed: 1
+  earthPosition: {x: 0, y: 4, z: 0}
+  orbitAxis: {x: 0, y: 1, z: 0}
+  alwaysLookAtEarth: 1
+  lookAtEarthSpeed: 5
+  startAngle: 10
+  useCustomStartPosition: 1
+  customStartPosition: {x: 0, y: 4, z: 0}
+  useCustomAsOrbitCenter: 1
+  currentAngle: 0
+  currentOrbitPosition: {x: 0, y: 0, z: 0}
+  enableLaser: 0
+  laserRange: 100
+  laserDamage: 10
+  laserCooldown: 1
+  laserOrigin: {fileID: 0}
+  laserLineRenderer: {fileID: 0}
+  laserColor: {r: 1, g: 0, b: 0, a: 1}
+  laserWidth: 0.1
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  showCollisionDebug: 1
+  useAdvancedCollision: 1
+  collisionCheckRadius: 0.5
+  defaultTarget: {fileID: 0}
+  autoTargetEarth: 0
+  earthTargetingRange: 50
+  targetSwitchCooldown: 3
+  autoTargetDelay: 10
+  enableTumbling: 0
+  tumblingTriggerTime: 5
+  tumblingDuration: 3
+  tumblingSpeed: 90
+  useRightDirectionLaser: 1
+  enableLaserSimulation: 0
+  lazerTarget: {fileID: 0}
+  simulationStartTime: 5
+  angleDriftDuration: 5
+  maxAngleDrift: 20
+  stopLaserAtCollision: 1
+  angleDriftCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!23 &2082959604
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082959602}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 3683344635396037008, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+  - {fileID: -7008227279440197156, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+  - {fileID: -8669805027464419063, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+  - {fileID: 8899931857787971983, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+  - {fileID: 898280491667706138, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+  - {fileID: -3546304873606957108, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+  - {fileID: 2353549760649061687, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &2082959605
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082959602}
+  m_Mesh: {fileID: 7143265188511463310, guid: 674177046d3c33e448665161f21e58b9, type: 3}
+--- !u!4 &2082959606
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082959602}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 27.13, y: 0, z: 0}
+  m_LocalScale: {x: 10, y: 10, z: 10}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &2082959607
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082959602}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -4072,4 +4407,5 @@ SceneRoots:
   - {fileID: 1777457960}
   - {fileID: 1470141729}
   - {fileID: 1211360749}
+  - {fileID: 2082959606}
   - {fileID: 1240100928}

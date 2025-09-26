@@ -39,6 +39,10 @@ public class SatelliteController : MonoBehaviour
     private Rigidbody rb;
     private float originalMoveSpeed;
 
+    public int maxRepeatCount = 2; // 반복 허용 횟수
+    private int repeatCount = 0;
+    private bool isAbnormal = false;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -228,35 +232,27 @@ public class SatelliteController : MonoBehaviour
         // 디버깅 로그 추가
         UIManager.instance.SetDistanceText( distanceToTarget );
         Debug.Log($"[Tracking] 대상과의 거리: {distanceToTarget}m, 설정된 추적 거리: {trackingDistance}m");
-        Debug.Log($"[Tracking] 최소 허용 거리: {trackingDistance * 0.7f}m, 최대 허용 거리: {trackingDistance * 1.3f}m");
 
-        if (distanceToTarget < trackingDistance * 0.7f)
+        if (distanceToTarget <= trackingDistance)
         {
-            Debug.Log("[Tracking] 너무 가까움 - 뒤로 물러남");
-            Vector3 backwardDirection = -directionToTarget.normalized;
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(backwardDirection), Time.deltaTime * 2f);
-            rb.linearVelocity = transform.forward * moveSpeed * 0.5f;
-        }
-        else if (distanceToTarget < trackingDistance * 1.3f)
-        {
-            Debug.Log("[Tracking] 적절한 거리 - 제자리에서 대상 주시");
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToTarget), Time.deltaTime * 3f);
+            // 트래킹 중지: 방향만 고정, 이동/속도 모두 멈춤
+            transform.rotation = Quaternion.LookRotation(directionToTarget);
             rb.linearVelocity = Vector3.zero;
-        }
-        else
-        {
-            Debug.Log("[Tracking] 너무 멈 - 대상을 향해 접근");
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToTarget), Time.deltaTime * 3f);
-            rb.linearVelocity = transform.forward * moveSpeed * trackingSpeedMultiplier;
+            Debug.Log("[Tracking] 추적 거리 도달 - 방향 고정, 이동 중지");
+            isTracking = false; // 추가: 트래킹 완전 중지
+            return;
         }
 
+        // 거리가 trackingDistance보다 크면 계속 추적
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToTarget), Time.deltaTime * 3f);
+        rb.linearVelocity = transform.forward * moveSpeed * trackingSpeedMultiplier;
+
+        // Y축 보정(필요시)
         float targetY = trackingTarget.position.y;
         float currentY = transform.position.y;
         float yDiff = targetY - currentY;
-
         if (Mathf.Abs(yDiff) > 1.0f)
         {
-            Debug.Log($"[Tracking] Y축 조정: 차이 = {yDiff}m");
             Vector3 velocity = rb.linearVelocity;
             velocity.y = Mathf.Sign(yDiff) * verticalSpeed * 0.7f;
             rb.linearVelocity = velocity;

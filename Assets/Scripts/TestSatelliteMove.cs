@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class TestSatelliteMove : MonoBehaviour
 {
-    public Vector3 targetPosition = new Vector3(0, 0, 5); // 이동 목표 지점
-    public float moveSpeed = 2f;
+    public Vector3 targetPosition = new Vector3(0, 0, 2); // 이동 목표 지점
+    public float moveSpeed = 3f;
     public float rotationSpeed = 90f; // 회전 속도 (도/초)
 
     private Vector3 startPosition;
@@ -34,6 +34,9 @@ public class TestSatelliteMove : MonoBehaviour
         Vector3 destination = movingToTarget ? targetPosition : startPosition;
         float step = moveSpeed * Time.deltaTime;
         transform.position = Vector3.MoveTowards(transform.position, destination, step);
+
+        // 이동 중에도 Y축으로 회전
+        transform.Rotate(0, rotationSpeed * Time.deltaTime, 0);
 
         if (Vector3.Distance(transform.position, destination) < 0.001f)
         {
