@@ -533,8 +533,8 @@ public class SatelliteOrbitController : MonoBehaviour
             // 색상 설정
             if (hasHit)
             {
-                laserLineRenderer.startColor = Color.red;
-                laserLineRenderer.endColor = Color.red;
+                laserLineRenderer.startColor = Color.green;
+                laserLineRenderer.endColor = Color.green;
             }
             else
             {

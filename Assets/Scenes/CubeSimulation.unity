@@ -2342,7 +2342,7 @@ MonoBehaviour:
   laserCooldown: 0
   laserOrigin: {fileID: 0}
   laserLineRenderer: {fileID: 0}
-  laserColor: {r: 0.30462468, g: 1, b: 0, a: 1}
+  laserColor: {r: 1, g: 0.28773582, b: 0.28773582, a: 1}
   laserWidth: 0.1
   collisionLayers:
     serializedVersion: 2
